@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { BrandMark, IconLogout } from '../../components/ui';
 import { RESIDENT_PAGES as NAV_ITEMS } from '../registry';
+import { AnnouncementStack } from '../../components/Announcements';
 
 export default function ResidentPortal({ profile, onProfileChange, onLogout, showToast }) {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -56,7 +57,8 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
       </div>
 
       <main className="flex-1 min-w-0 p-5 pb-28 md:p-10">
-        {/* TODO (Rafanan, announcements task): <AnnouncementStack items={announcements} /> goes here. */}
+                {/* Announcements from staff (Rafanan, UC-09) */}
+        <AnnouncementStack className="sticky top-16 md:top-4 z-20 max-w-5xl mx-auto mb-6" />
         <div key={activeTab} className="tab-enter max-w-5xl mx-auto">
           <Tab {...tabProps} />
         </div>

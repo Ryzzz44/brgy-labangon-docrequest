@@ -1,6 +1,7 @@
 // src/pages/Welcome.jsx - public landing page.
 import React from 'react';
 import HeroScene from '../components/HeroScene';
+import { AnnouncementStack } from '../components/Announcements';
 import { BrandMark, IconArrowLeft, IconBell, StatusBadge } from '../components/ui';
 import { DOCUMENT_TYPES } from '../utils/constants';
 
@@ -23,7 +24,10 @@ export default function Welcome({ onLogin, onRegister, onLegal }) {
         </div>
       </header>
 
-      {/* TODO (Rafanan, announcements task): show <AnnouncementStack items={announcements} /> here. */}
+            {/* Announcements from staff (Rafanan, UC-09) */}
+      <div className="fixed top-[4.5rem] inset-x-3 z-30 flex justify-center pointer-events-none">
+        <div className="pointer-events-auto w-full max-w-5xl"><AnnouncementStack /></div>
+      </div>
 
       {/* Hero stage */}
       <section className="p-3 pt-3">

@@ -2,6 +2,7 @@ package ph.brgylabangon.docrequest.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import ph.brgylabangon.docrequest.dto.EditRequestBody;
@@ -37,5 +38,21 @@ public class RequestManagementController {
     @PostMapping("/{id}/cancel")
     public RequestView cancel(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
         return service.cancel(user, id);
+    }
+
+    @PatchMapping("/{id}/archive")
+    public RequestView archive(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+        return service.setArchived(user, id, true);
+    }
+
+    @PatchMapping("/{id}/unarchive")
+    public RequestView unarchive(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+        return service.setArchived(user, id, false);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+        service.delete(user, id);
     }
 }

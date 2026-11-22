@@ -30,13 +30,19 @@ public class RequestManagementService {
         this.transactionLog = transactionLog;
     }
 
-    /** view = "pending" (can still be edited or cancelled) or "archived". */
+    /**
+     * view = "pending" -> can still be edited or cancelled
+     * "completed" -> finished (Released, Rejected, Cancelled) and not archived yet
+     * "archived" -> archived by the resident
+     */
     @Transactional(readOnly = true)
     public List<RequestView> list(AuthUser user, String view) {
         return requests.findByResidentIdAndDeletedByResidentFalseOrderByCreatedAtDesc(user.id()).stream()
-                .filter(r -> "archived".equals(view)
-                        ? r.isArchivedByResident()
-                        : r.getStatus() == RequestStatus.PENDING)
+                .filter(r -> switch (view) {
+                    case "archived" -> r.isArchivedByResident();
+                    case "completed" -> r.getStatus().isFinal() && !r.isArchivedByResident();
+                    default -> r.getStatus() == RequestStatus.PENDING;
+                })
                 .map(RequestView::from)
                 .toList();
     }
@@ -68,6 +74,36 @@ public class RequestManagementService {
         request.setResidentSeenStatus(RequestStatus.CANCELLED); // the resident did it, so no notification
         transactionLog.log(request, user, "CANCELLED", "Resident cancelled request " + request.getReferenceNumber());
         return RequestView.from(request);
+    }
+
+    /**
+     * UC-07: move a finished request to the archive (or back with archived =
+     * false).
+     */
+    @Transactional
+    public RequestView setArchived(AuthUser user, Long id, boolean archived) {
+        DocumentRequest request = lookup.getForUser(id, user);
+        requireFinal(request);
+        request.setArchivedByResident(archived);
+        return RequestView.from(request);
+    }
+
+    /**
+     * UC-07: delete from the resident's list. Soft delete: the row stays for staff
+     * records and reports.
+     */
+    @Transactional
+    public void delete(AuthUser user, Long id) {
+        DocumentRequest request = lookup.getForUser(id, user);
+        requireFinal(request);
+        request.setDeletedByResident(true);
+    }
+
+    private void requireFinal(DocumentRequest request) {
+        if (!request.getStatus().isFinal()) {
+            throw new ApiException(HttpStatus.CONFLICT,
+                    "Only released, rejected or cancelled requests can be archived or deleted.");
+        }
     }
 
     private void requirePending(DocumentRequest request, String action) {

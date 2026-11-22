@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import ph.brgylabangon.docrequest.entity.Staff;
 import ph.brgylabangon.docrequest.repository.StaffRepository;
@@ -14,6 +15,7 @@ import ph.brgylabangon.docrequest.repository.StaffRepository;
  * Residents register themselves; staff accounts are never created from the public website.
  */
 @Component
+@Order(1)
 public class DataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);

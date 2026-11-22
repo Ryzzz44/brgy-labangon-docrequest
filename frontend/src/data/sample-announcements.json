@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "title": "Office hours",
+    "message": "The barangay hall is open Monday to Friday, 8:00 AM to 5:00 PM. Bring a valid ID when claiming documents.",
+    "level": "important",
+    "active": true,
+    "createdBy": "Barangay Secretary",
+    "createdAt": "2026-11-20T08:00:00",
+    "expiresAt": null
+  }
+]

@@ -2,21 +2,11 @@
 // Layout for logged-in staff: dark header + tab bar. Each tab is its own file (see TASKS.md for owners).
 import React, { useState } from 'react';
 import { BrandMark, IconLogout } from '../../components/ui';
-import RequestsTab from './RequestsTab';
-import ReportsTab from './ReportsTab';
-import AnnouncementsTab from './AnnouncementsTab';
-import ActivityTab from './ActivityTab';
-
-const TABS = [
-  { id: 'requests', label: 'Requests', Tab: RequestsTab },
-  { id: 'reports', label: 'Reports', Tab: ReportsTab },
-  { id: 'announcements', label: 'Announcements', Tab: AnnouncementsTab },
-  { id: 'activity', label: 'Activity log', Tab: ActivityTab },
-];
+import { STAFF_PAGES as TABS } from '../registry';
 
 export default function StaffDashboard({ staff, onLogout, showToast }) {
   const [tab, setTab] = useState('requests');
-  const { Tab } = TABS.find((t) => t.id === tab);
+  const { Component: Tab } = TABS.find((t) => t.id === tab);
 
   return (
     <div className="min-h-screen p-4 md:p-8">

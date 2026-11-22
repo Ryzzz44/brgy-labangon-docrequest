@@ -8,8 +8,28 @@ Each task is also a GitHub Issue assigned to its owner.
 welcome page, resident and staff layouts, `RequestView` (shared JSON shape), `RequestLookupService`
 (load a request + ownership check), `TransactionLogService` (audit log).
 
-Endpoints under `/api/resident/**` need a resident token; `/api/staff/**` need a staff token
-(already enforced in `SecurityConfig`). In a controller, get the logged-in user with
+## Presentation rules (from our professor)
+
+1. **Each member owns at least 2 full pages** (see the table below) and the backend endpoints they use.
+2. **Your pages must work even if a groupmate's part is missing or broken.**
+   - Every page has a direct link that works **without logging in** (open `http://localhost:5173/?page=all`).
+   - The backend's **demo mode** (`app.demo-mode=true`, the default for local runs) answers your API calls as the
+     demo resident `juan@demo.local` or the first staff account, and fills an empty database with sample requests
+     in every status. So your page has data even if a groupmate's "create" feature is not built.
+   - Each member reads data through **their own endpoints** (do not call a groupmate's endpoint).
+   - If you really need a groupmate's data or component, use a **stand-in**: the JSON files in
+     `frontend/src/data/` with `withSample(...)` from `frontend/src/utils/withSample.js`.
+
+| Member | Pages (direct links) |
+|---|---|
+| Salado | Dashboard `?page=dashboard`, Request Document `?page=request`, Track Requests `?page=track`, Notifications `?page=notifications` |
+| Rafanan | Staff Requests `?role=staff&page=requests`, Reports `?role=staff&page=reports`, Announcements `?role=staff&page=announcements` |
+| Sanchez | Manage Requests `?page=manage`, Archive `?page=archive`, My Profile `?page=profile`, Activity log `?role=staff&page=activity` |
+
+Endpoints under `/api/resident/**` need a resident token (or demo mode); `/api/staff/**` need a staff token
+(already enforced in `SecurityConfig`). Each member uses their own URL prefix so controllers never clash:
+Salado `/api/resident/requests`, Rafanan `/api/staff/requests`, `/api/staff/reports`, `/api/staff/announcements`, `/api/announcements`,
+Sanchez `/api/resident/manage`, `/api/resident/profile`, `/api/resident/password`, `/api/staff/history`. In a controller, get the logged-in user with
 `@AuthenticationPrincipal AuthUser user`.
 
 ---
@@ -33,7 +53,7 @@ Frontend: `api/requests.js`, `pages/resident/RequestTab.jsx`
 - `GET /api/resident/requests`: my requests, newest first (`findByResidentIdAndDeletedByResidentFalseOrderByCreatedAtDesc`).
 - `GET /api/resident/requests/{id}` (use `RequestLookupService`).
 - Frontend: `useMyRequests()` hook in `api/requests.js` that reloads every 15 seconds; `TrackTab.jsx`
-  with progress bar and rejection reason; render `<RequestActions request={r} onChanged={reload} showToast={showToast} />` on each card.
+  with progress bar and rejection reason.
 
 ### S3. Notifications and Dashboard (UC-02)
 - `PATCH /api/resident/requests/{id}/seen` and `PATCH /api/resident/requests/seen-all`: set `residentSeenStatus = status`.
@@ -79,19 +99,18 @@ Backend: `dto/AnnouncementBody.java`, `service/AnnouncementService.java`, `contr
 ## Sean Anthony P. Sanchez: Objective 3, Request Management Module
 Branch: `feature/sanchez-request-management`
 
-### N1. Modify Pending Request (UC-04)
+### N1 + N2. Manage Requests page: Modify (UC-04) and Cancel (UC-03) pending requests
 Backend: `dto/EditRequestBody.java`, `service/RequestManagementService.java`, `controller/RequestManagementController.java`
-- `PUT /api/resident/requests/{id}` body `{ documentType, purpose, validIdImage? }`.
+- `GET /api/resident/manage/requests?view=pending|archived`: your own list endpoint (do not use Salado's).
+- `PUT /api/resident/manage/requests/{id}` body `{ documentType, purpose, validIdImage? }`.
   - Only the owner, only while `PENDING`, else `409 CONFLICT` "Only pending requests can be edited."
   - Set `seenByStaff = false`; log `UPDATED`.
-
-### N2. Cancel Pending Request (UC-03)
-- `POST /api/resident/requests/{id}/cancel`: only while `PENDING`; status `CANCELLED`; log `CANCELLED`.
-- Frontend: `pages/resident/RequestActions.jsx` (Edit + Cancel buttons and modals), `api/requestManagement.js`.
+- `POST /api/resident/manage/requests/{id}/cancel`: only while `PENDING`; status `CANCELLED`; log `CANCELLED`.
+- Frontend: `pages/resident/ManageRequestsTab.jsx` (list + Edit modal + Cancel confirmation), `api/requestManagement.js`.
 
 ### N3. Archive or Delete Completed Request (UC-07)
-- `PATCH /api/resident/requests/{id}/archive` and `/unarchive`: only when status is final (Released, Rejected, Cancelled).
-- `DELETE /api/resident/requests/{id}`: soft delete (`deletedByResident = true`), only when final.
+- `PATCH /api/resident/manage/requests/{id}/archive` and `/unarchive`: only when status is final (Released, Rejected, Cancelled).
+- `DELETE /api/resident/manage/requests/{id}`: soft delete (`deletedByResident = true`), only when final.
 - Frontend: `pages/resident/ArchiveTab.jsx`.
 
 ### N4. Profile and password
@@ -107,7 +126,7 @@ Backend: `dto/EditRequestBody.java`, `service/RequestManagementService.java`, `c
 
 ## Order of work
 
-1. Everyone: run the base project (README steps 1 to 4) and log in as resident and as staff.
+1. Everyone: run the base project (README steps 1 to 4), open `?page=all`, and log in once as resident and as staff.
 2. Build the backend endpoints first and test them in Postman (log in, copy the `token`, add header `Authorization: Bearer <token>`).
 3. Build the screens. Copy the look from `reference/firebase-version/`.
 4. Open a PR into `dev` per finished task. When all are merged and tested, PR `dev` into `main`.

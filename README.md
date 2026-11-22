@@ -63,6 +63,16 @@ npm run dev
 
 - Resident site: http://localhost:5173
 - Staff site: http://localhost:5173/?role=staff
+- **Every page on its own, no login (for presentations): http://localhost:5173/?page=all**
+
+## Demo mode (for presentations)
+
+`app.demo-mode` is **on** by default when you run locally:
+- pages opened with `?page=...` work without logging in (the API acts as the demo resident
+  `juan@demo.local` / `Demo1234!` or the first staff account);
+- an empty database gets sample requests in every status, so each member's page has data.
+
+**Turn it off before real residents use the system:** set the environment variable `DEMO_MODE=false`.
 
 ## 5. Project structure
 

@@ -1,0 +1,122 @@
+[
+  {
+    "id": 12,
+    "requestId": 7,
+    "referenceNumber": "BR-2026-000107",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "CANCELLED",
+    "remarks": "Status changed to Cancelled",
+    "timestamp": "2026-11-17T14:00:00"
+  },
+  {
+    "id": 10,
+    "requestId": 6,
+    "referenceNumber": "BR-2026-000106",
+    "actorName": "Barangay Secretary",
+    "actorRole": "Staff",
+    "actionType": "REJECTED",
+    "remarks": "The uploaded ID is not readable. Please submit a clearer photo.",
+    "timestamp": "2026-11-16T14:00:00"
+  },
+  {
+    "id": 11,
+    "requestId": 7,
+    "referenceNumber": "BR-2026-000107",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "SUBMITTED",
+    "remarks": "Submitted request for Certificate of Indigency",
+    "timestamp": "2026-11-16T09:30:00"
+  },
+  {
+    "id": 8,
+    "requestId": 5,
+    "referenceNumber": "BR-2026-000105",
+    "actorName": "Barangay Secretary",
+    "actorRole": "Staff",
+    "actionType": "RELEASED",
+    "remarks": "Status changed to Released",
+    "timestamp": "2026-11-15T14:00:00"
+  },
+  {
+    "id": 9,
+    "requestId": 6,
+    "referenceNumber": "BR-2026-000106",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "SUBMITTED",
+    "remarks": "Submitted request for Certificate of Residency",
+    "timestamp": "2026-11-15T09:30:00"
+  },
+  {
+    "id": 6,
+    "requestId": 4,
+    "referenceNumber": "BR-2026-000104",
+    "actorName": "Barangay Secretary",
+    "actorRole": "Staff",
+    "actionType": "READY_FOR_PICKUP",
+    "remarks": "Status changed to Ready for Pickup",
+    "timestamp": "2026-11-14T14:00:00"
+  },
+  {
+    "id": 7,
+    "requestId": 5,
+    "referenceNumber": "BR-2026-000105",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "SUBMITTED",
+    "remarks": "Submitted request for Barangay Clearance",
+    "timestamp": "2026-11-14T09:30:00"
+  },
+  {
+    "id": 4,
+    "requestId": 3,
+    "referenceNumber": "BR-2026-000103",
+    "actorName": "Barangay Secretary",
+    "actorRole": "Staff",
+    "actionType": "PROCESSED",
+    "remarks": "Status changed to Processed",
+    "timestamp": "2026-11-13T14:00:00"
+  },
+  {
+    "id": 5,
+    "requestId": 4,
+    "referenceNumber": "BR-2026-000104",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "SUBMITTED",
+    "remarks": "Submitted request for First Time Job Seeker Certificate",
+    "timestamp": "2026-11-13T09:30:00"
+  },
+  {
+    "id": 3,
+    "requestId": 3,
+    "referenceNumber": "BR-2026-000103",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "SUBMITTED",
+    "remarks": "Submitted request for Certificate of Residency",
+    "timestamp": "2026-11-12T09:30:00"
+  },
+  {
+    "id": 2,
+    "requestId": 2,
+    "referenceNumber": "BR-2026-000102",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "SUBMITTED",
+    "remarks": "Submitted request for Certificate of Indigency",
+    "timestamp": "2026-11-11T09:30:00"
+  },
+  {
+    "id": 1,
+    "requestId": 1,
+    "referenceNumber": "BR-2026-000101",
+    "actorName": "Juan Dela Cruz",
+    "actorRole": "Resident",
+    "actionType": "SUBMITTED",
+    "remarks": "Submitted request for Barangay Clearance",
+    "timestamp": "2026-11-10T09:30:00"
+  }
+]

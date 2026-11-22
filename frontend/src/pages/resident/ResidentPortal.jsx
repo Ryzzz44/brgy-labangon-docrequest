@@ -1,29 +1,13 @@
 // src/pages/resident/ResidentPortal.jsx
 // Layout for logged-in residents: sidebar (desktop), bottom tabs (phone), and the active tab.
-// Each tab lives in its own file so team members do not edit the same file.
+// Each tab lives in its own file (listed in ../registry.js) so team members do not edit the same file.
 import React, { useState } from 'react';
-import {
-  BrandMark, IconHome, IconFile, IconSearch, IconBell, IconUser, IconLogout, IconArchive,
-} from '../../components/ui';
-import DashboardTab from './DashboardTab';
-import RequestTab from './RequestTab';
-import TrackTab from './TrackTab';
-import NotificationsTab from './NotificationsTab';
-import ArchiveTab from './ArchiveTab';
-import ProfileTab from './ProfileTab';
-
-const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Dashboard', short: 'Home', icon: IconHome, Tab: DashboardTab },
-  { id: 'request', label: 'Request Document', short: 'Request', icon: IconFile, Tab: RequestTab },
-  { id: 'track', label: 'Track Requests', short: 'Track', icon: IconSearch, Tab: TrackTab },
-  { id: 'notifications', label: 'Notifications', short: 'Alerts', icon: IconBell, Tab: NotificationsTab },
-  { id: 'archive', label: 'Archive', short: 'Archive', icon: IconArchive, Tab: ArchiveTab },
-  { id: 'profile', label: 'My Profile', short: 'Profile', icon: IconUser, Tab: ProfileTab },
-];
+import { BrandMark, IconLogout } from '../../components/ui';
+import { RESIDENT_PAGES as NAV_ITEMS } from '../registry';
 
 export default function ResidentPortal({ profile, onProfileChange, onLogout, showToast }) {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const { Tab } = NAV_ITEMS.find((n) => n.id === activeTab);
+  const { Component: Tab } = NAV_ITEMS.find((n) => n.id === activeTab);
 
   // Props every tab receives.
   const tabProps = { profile, onProfileChange, showToast, goTo: setActiveTab };
@@ -79,7 +63,7 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
       </main>
 
       {/* Bottom tab bar (phone) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 grid grid-cols-6 px-1 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 grid grid-cols-7 px-1 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {NAV_ITEMS.map(({ id, short, icon: Icon }) => (
           <button
             key={id}

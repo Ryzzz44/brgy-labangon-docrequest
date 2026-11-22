@@ -2,6 +2,7 @@
 // Decides which screen to show:
 //   ?role=staff in the URL -> staff login / staff dashboard
 //   otherwise              -> welcome, login, register, or the resident portal
+//   ?page=<id> (or ?role=staff&page=<id>) -> that ONE page on its own, no login (see pages/registry.js)
 // The login token is kept in localStorage; on reload we ask GET /api/auth/me who it belongs to.
 import React, { useEffect, useState } from 'react';
 import { Splash, Toast } from './components/ui';
@@ -15,8 +16,11 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResidentPortal from './pages/resident/ResidentPortal';
 import StaffLogin from './pages/staff/StaffLogin';
 import StaffDashboard from './pages/staff/StaffDashboard';
+import StandalonePage from './pages/StandalonePage';
 
-const isStaffPage = new URLSearchParams(window.location.search).get('role') === 'staff';
+const params = new URLSearchParams(window.location.search);
+const isStaffPage = params.get('role') === 'staff';
+const standaloneId = params.get('page');
 
 export default function App() {
   const [session, setSession] = useState(null); // { role: 'RESIDENT' | 'STAFF', user: {...} }
@@ -62,7 +66,9 @@ export default function App() {
   if (!ready) return <Splash />;
 
   let screen;
-  if (isStaffPage) {
+  if (standaloneId) {
+    screen = <StandalonePage area={isStaffPage ? 'staff' : 'resident'} id={standaloneId} session={session} showToast={showToast} />;
+  } else if (isStaffPage) {
     screen = session?.role === 'STAFF'
       ? <StaffDashboard staff={session.user} onLogout={handleLogout} showToast={showToast} />
       : <StaffLogin onSuccess={handleLoggedIn} />;

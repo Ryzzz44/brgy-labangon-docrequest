@@ -19,3 +19,8 @@ export const loginStaff = (email, password) =>
 export const fetchMe = () => api.get('/api/auth/me');
 
 export const logout = () => setToken(null);
+
+
+// Forgot password (Salado): step 1 emails a reset link, step 2 saves the new password.
+export const forgotPassword = (email) => api.post('/api/auth/forgot-password', { email });
+export const resetPassword = (token, newPassword) => api.post('/api/auth/reset-password', { token, newPassword });

@@ -45,6 +45,11 @@ public class DocumentRequest {
     @Column(nullable = false, length = 20)
     private RequestStatus residentSeenStatus = RequestStatus.PENDING;
 
+    /** Status whose notification the resident deleted (X / Delete all). A newer status shows up again. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private RequestStatus notifClearedStatus;
+
     /** False when the resident created or changed it and staff have not opened it yet. */
     @Column(nullable = false)
     private boolean seenByStaff = false;
@@ -90,6 +95,8 @@ public class DocumentRequest {
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public RequestStatus getResidentSeenStatus() { return residentSeenStatus; }
     public void setResidentSeenStatus(RequestStatus residentSeenStatus) { this.residentSeenStatus = residentSeenStatus; }
+    public RequestStatus getNotifClearedStatus() { return notifClearedStatus; }
+    public void setNotifClearedStatus(RequestStatus notifClearedStatus) { this.notifClearedStatus = notifClearedStatus; }
     public boolean isSeenByStaff() { return seenByStaff; }
     public void setSeenByStaff(boolean seenByStaff) { this.seenByStaff = seenByStaff; }
     public boolean isArchivedByResident() { return archivedByResident; }

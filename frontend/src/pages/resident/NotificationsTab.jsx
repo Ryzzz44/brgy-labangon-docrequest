@@ -2,9 +2,10 @@
 // OWNER: Samuel O. Salado (UC-02 Track Request Status: notifications)
 // A notification = a request whose status changed after submission.
 // Unread = the status is different from residentSeenStatus (the last status the resident has seen).
-import React from 'react';
-import { StatusBadge, formatDate, btnSecondary, cardCls } from '../../components/ui';
-import { useMyRequests, markSeen, markAllSeen } from '../../api/requests';
+// X deletes one notification and "Delete all" clears the list; a newer status change shows up again.
+import React, { useState } from 'react';
+import { Modal, StatusBadge, IconX, IconTrash, formatDate, btnPrimary, btnSecondary, cardCls } from '../../components/ui';
+import { useMyRequests, markSeen, markAllSeen, clearNotification, clearAllNotifications, isUnreadUpdate } from '../../api/requests';
 
 const MESSAGES = {
   Processed: 'was verified and is now being prepared.',
@@ -16,30 +17,25 @@ const MESSAGES = {
 
 export default function NotificationsTab({ showToast }) {
   const { requests, loading, reload } = useMyRequests();
+  const [confirmClear, setConfirmClear] = useState(false);
 
-  // Only requests that moved past "Pending" have something to report.
-  const notifications = requests.filter((r) => r.status !== 'Pending');
-  const isUnread = (r) => r.status !== r.residentSeenStatus;
-  const unreadCount = notifications.filter(isUnread).length;
+  // Only requests that moved past "Pending" have something to report, unless the resident deleted that update.
+  const notifications = requests.filter((r) => r.status !== 'Pending' && r.notifClearedStatus !== r.status);
+  const unreadCount = notifications.filter(isUnreadUpdate).length;
 
-  const openNotification = async (r) => {
-    if (!isUnread(r)) return;
+  // Runs an API call, then reloads the list.
+  const run = async (fn, okMessage) => {
     try {
-      await markSeen(r.id);
+      await fn();
       reload();
+      if (okMessage) showToast(okMessage);
     } catch (err) {
       showToast(err.message, 'error');
     }
   };
 
-  const readAll = async () => {
-    try {
-      await markAllSeen();
-      reload();
-      showToast('All notifications marked as read.');
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
+  const openNotification = (r) => {
+    if (isUnreadUpdate(r)) run(() => markSeen(r.id));
   };
 
   return (
@@ -51,7 +47,17 @@ export default function NotificationsTab({ showToast }) {
             {unreadCount > 0 ? `${unreadCount} unread update${unreadCount > 1 ? 's' : ''}` : 'You are all caught up.'}
           </p>
         </div>
-        {unreadCount > 0 && <button onClick={readAll} className={btnSecondary}>Mark all as read</button>}
+        <div className="flex gap-2">
+          {unreadCount > 0 && (
+            <button onClick={() => run(markAllSeen, 'All notifications marked as read.')} className={btnSecondary}>
+              Mark all as read
+            </button>
+          )}
+          <button onClick={() => setConfirmClear(true)} disabled={notifications.length === 0}
+            className={`${btnSecondary} disabled:opacity-40`}>
+            <IconTrash className="w-4 h-4" /> Delete all
+          </button>
+        </div>
       </div>
 
       {loading && <div className={`${cardCls} p-10 text-center text-sm text-slate-400`}>Loading...</div>}
@@ -61,12 +67,15 @@ export default function NotificationsTab({ showToast }) {
 
       <div className="space-y-3">
         {notifications.map((r) => (
-          <button
+          <div
             key={r.id}
+            role="button"
+            tabIndex={0}
             onClick={() => openNotification(r)}
-            className={`${cardCls} w-full text-left p-5 flex items-start gap-4 ${isUnread(r) ? 'ring-2 ring-brand/30' : ''}`}
+            onKeyDown={(e) => e.key === 'Enter' && openNotification(r)}
+            className={`${cardCls} w-full text-left p-5 flex items-start gap-4 cursor-pointer ${isUnreadUpdate(r) ? 'ring-2 ring-brand/30' : ''}`}
           >
-            <span className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${isUnread(r) ? 'bg-brand' : 'bg-slate-200'}`} />
+            <span className={`mt-1.5 w-2.5 h-2.5 rounded-full shrink-0 ${isUnreadUpdate(r) ? 'bg-brand' : 'bg-slate-200'}`} />
             <div className="flex-1 min-w-0">
               <p className="text-sm text-slate-800">
                 Your <span className="font-semibold">{r.documentType}</span> ({r.referenceNumber}) {MESSAGES[r.status]}
@@ -77,9 +86,34 @@ export default function NotificationsTab({ showToast }) {
               <p className="text-[11px] text-slate-400 mt-1">{formatDate(r.updatedAt)}</p>
             </div>
             <StatusBadge status={r.status} />
-          </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); run(() => clearNotification(r.id), 'Notification deleted.'); }}
+              aria-label="Delete notification"
+              className="text-slate-400 hover:text-rose-600 p-1 -m-1 rounded-full"
+            >
+              <IconX className="w-4 h-4" />
+            </button>
+          </div>
         ))}
       </div>
+
+      {confirmClear && (
+        <Modal title="Delete all notifications?" onClose={() => setConfirmClear(false)} maxWidth="max-w-md">
+          <p className="text-sm text-slate-600">
+            {notifications.length} notification{notifications.length === 1 ? '' : 's'} will be cleared.
+            Your requests are not affected, and you will still be notified about new status changes.
+          </p>
+          <div className="flex gap-2 pt-5">
+            <button onClick={() => setConfirmClear(false)} className={btnSecondary}>Keep them</button>
+            <button
+              onClick={() => { setConfirmClear(false); run(clearAllNotifications, 'Notifications cleared.'); }}
+              className={`${btnPrimary} flex-1 !bg-rose-600 hover:!bg-rose-700`}
+            >
+              Delete all
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }

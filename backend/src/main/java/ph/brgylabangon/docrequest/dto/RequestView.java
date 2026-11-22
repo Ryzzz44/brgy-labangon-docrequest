@@ -25,13 +25,15 @@ public record RequestView(
         Long residentId,
         String residentName,
         String residentContactNumber,
-        String residentAddress) {
+        String residentAddress,
+        RequestStatus notifClearedStatus) {
 
     public static RequestView from(DocumentRequest r) {
         var res = r.getResident();
         return new RequestView(r.getId(), r.getReferenceNumber(), r.getDocumentType(), r.getPurpose(),
                 r.getStatus(), r.getRejectionReason(), r.getResidentSeenStatus(), r.isSeenByStaff(),
                 r.isArchivedByResident(), r.getValidIdImage(), r.getCreatedAt(), r.getUpdatedAt(),
-                res.getId(), res.getFullName(), res.getContactNumber(), res.getAddress());
+                res.getId(), res.getFullName(), res.getContactNumber(), res.getAddress(),
+                r.getNotifClearedStatus());
     }
 }

@@ -22,7 +22,7 @@ import ph.brgylabangon.docrequest.security.JwtAuthFilter;
 
 /**
  * Who may call what:
- *   /api/auth/**              -> anyone (register, login)
+ *   /api/auth/**              -> anyone (register, login, forgot/reset password)
  *   GET /api/announcements/** -> anyone (banners on the welcome page)
  *   /api/resident/**          -> logged-in residents only
  *   /api/staff/**             -> logged-in staff only
@@ -49,7 +49,8 @@ public class SecurityConfig {
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/staff/login", "/api/health").permitAll()
+                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/staff/login",
+                        "/api/auth/forgot-password", "/api/auth/reset-password", "/api/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/announcements/**").permitAll()
                 .requestMatchers("/api/resident/**").hasRole("RESIDENT")
                 .requestMatchers("/api/staff/**").hasRole("STAFF")

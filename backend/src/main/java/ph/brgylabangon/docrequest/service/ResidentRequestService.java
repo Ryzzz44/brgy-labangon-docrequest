@@ -83,6 +83,24 @@ public class ResidentRequestService {
                 .forEach(r -> r.setResidentSeenStatus(r.getStatus()));
     }
 
+    /** Notification X: hide this status update (it is also marked as read). */
+    @Transactional
+    public RequestView clearNotification(AuthUser user, Long id) {
+        DocumentRequest request = lookup.getForUser(id, user);
+        request.setNotifClearedStatus(request.getStatus());
+        request.setResidentSeenStatus(request.getStatus());
+        return RequestView.from(request);
+    }
+
+    /** Notifications "Delete all". The resident is still notified about later status changes. */
+    @Transactional
+    public void clearAllNotifications(AuthUser user) {
+        requests.findByResidentIdAndDeletedByResidentFalseOrderByCreatedAtDesc(user.id()).forEach(r -> {
+            r.setNotifClearedStatus(r.getStatus());
+            r.setResidentSeenStatus(r.getStatus());
+        });
+    }
+
     /** BR-2026-482913: year + 6 random digits, retried until unique. */
     private String newReferenceNumber() {
         String ref;

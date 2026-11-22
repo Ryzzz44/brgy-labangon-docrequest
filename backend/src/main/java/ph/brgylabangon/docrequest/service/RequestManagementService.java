@@ -99,6 +99,17 @@ public class RequestManagementService {
         request.setDeletedByResident(true);
     }
 
+    /** UC-07: "Delete all" in the archive. Soft delete, like delete(). Returns how many were removed. */
+    @Transactional
+    public int deleteAllArchived(AuthUser user) {
+        List<DocumentRequest> archived = requests.findByResidentIdAndDeletedByResidentFalseOrderByCreatedAtDesc(user.id())
+                .stream()
+                .filter(r -> r.isArchivedByResident() && r.getStatus().isFinal())
+                .toList();
+        archived.forEach(r -> r.setDeletedByResident(true));
+        return archived.size();
+    }
+
     private void requireFinal(DocumentRequest request) {
         if (!request.getStatus().isFinal()) {
             throw new ApiException(HttpStatus.CONFLICT,

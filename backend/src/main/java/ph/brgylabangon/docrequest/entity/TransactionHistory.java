@@ -33,6 +33,10 @@ public class TransactionHistory {
     @Column(nullable = false, updatable = false)
     private LocalDateTime timestamp;
 
+    /** Staff removed this resident action from their Notifications page (the log row itself stays). */
+    @Column(nullable = false)
+    private boolean dismissedByStaff = false;
+
     @PrePersist
     void onCreate() {
         timestamp = LocalDateTime.now();
@@ -50,4 +54,6 @@ public class TransactionHistory {
     public String getRemarks() { return remarks; }
     public void setRemarks(String remarks) { this.remarks = remarks; }
     public LocalDateTime getTimestamp() { return timestamp; }
+    public boolean isDismissedByStaff() { return dismissedByStaff; }
+    public void setDismissedByStaff(boolean dismissedByStaff) { this.dismissedByStaff = dismissedByStaff; }
 }

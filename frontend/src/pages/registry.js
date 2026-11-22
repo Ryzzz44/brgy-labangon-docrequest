@@ -15,6 +15,7 @@ import ProfileTab from './resident/ProfileTab';
 import RequestsTab from './staff/RequestsTab';
 import ReportsTab from './staff/ReportsTab';
 import AnnouncementsTab from './staff/AnnouncementsTab';
+import StaffNotificationsTab from './staff/NotificationsTab';
 import ActivityTab from './staff/ActivityTab';
 
 export const OWNERS = {
@@ -36,6 +37,7 @@ export const RESIDENT_PAGES = [
 export const STAFF_PAGES = [
   { id: 'requests', label: 'Requests', owner: 'rafanan', Component: RequestsTab },
   { id: 'reports', label: 'Reports', owner: 'rafanan', Component: ReportsTab },
+  { id: 'notifications', label: 'Notifications', owner: 'rafanan', Component: StaffNotificationsTab },
   { id: 'announcements', label: 'Announcements', owner: 'rafanan', Component: AnnouncementsTab },
   { id: 'activity', label: 'Activity log', owner: 'sanchez', Component: ActivityTab },
 ];

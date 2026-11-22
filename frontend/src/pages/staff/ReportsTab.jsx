@@ -1,12 +1,40 @@
 // src/pages/staff/ReportsTab.jsx
 // OWNER: James Carl P. Rafanan (UC-08 Generate Transaction Report)
-// Pick week / month / year and a date, see the totals, and print the report.
+// Pick week / month / year and a date, see the totals, and print the report or download it as CSV (Excel).
 import React, { useEffect, useState } from 'react';
-import { BrandMark, IconPrinter, StatCard, formatDate, inputCls, labelCls, btnPrimary, cardCls } from '../../components/ui';
+import { BrandMark, IconPrinter, IconDownload, StatCard, formatDate, inputCls, labelCls, btnPrimary, btnSecondary, cardCls } from '../../components/ui';
 import { getReport } from '../../api/reports';
 
 const today = () => new Date().toLocaleDateString('en-CA'); // "2026-11-22" in local time
 const niceDate = (iso) => new Date(iso).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
+
+// Puts a value in quotes so commas and quotes inside it do not break the CSV columns.
+// A value starting with = + - @ gets a ' in front so Excel shows it as text, not as a formula.
+const csvCell = (value) => {
+  const text = String(value ?? '');
+  const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
+
+// Builds the CSV file in the browser and downloads it (opens in Excel).
+function downloadCsv(report) {
+  const lines = [
+    ['Barangay Labangon Transaction Report'],
+    ['Period', `${report.from} to ${report.to}`],
+    ['Total requests', report.total],
+    [],
+    ['Reference', 'Resident', 'Document', 'Status', 'Filed'],
+    ...report.requests.map((r) => [r.referenceNumber, r.residentName, r.documentType, r.status, formatDate(r.createdAt)]),
+  ].map((row) => row.map(csvCell).join(','));
+  // \ufeff tells Excel the file is UTF-8 (so names like "Peñaflor" show correctly).
+  const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `barangay-report-${report.period}-${report.from}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function ReportsTab({ showToast }) {
   const [period, setPeriod] = useState('month');
@@ -37,7 +65,11 @@ export default function ReportsTab({ showToast }) {
           <label className={labelCls}>Any date in the period</label>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={inputCls} />
         </div>
-        <button onClick={() => window.print()} className={`${btnPrimary} sm:ml-auto`}>
+        <button onClick={() => downloadCsv(report)} disabled={!report || report.total === 0}
+          className={`${btnSecondary} sm:ml-auto disabled:opacity-40`}>
+          <IconDownload /> Download CSV
+        </button>
+        <button onClick={() => window.print()} className={btnPrimary}>
           <IconPrinter /> Print report
         </button>
       </div>

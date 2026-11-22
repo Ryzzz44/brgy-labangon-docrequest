@@ -7,7 +7,20 @@ barangay staff verify, process and release them.
 |---|---|---|
 | Frontend (screens) | React 18 + Vite + Tailwind CSS 4 | [`frontend/`](frontend) |
 | Backend (API, rules) | Spring Boot 3.3 (Java 17+), Spring Security + JWT | [`backend/`](backend) |
-| Database | MySQL 8 (XAMPP or MySQL Workbench) | created automatically |
+| Database | MySQL 8 (MySQL Server + Workbench) | created automatically |
+
+## Team and pages
+
+Every page also opens on its own, without logging in, when the backend and frontend are running
+(see [Demo mode](#demo-mode-for-presentations)). All pages: http://localhost:5173/?page=all
+
+| Member | Module | Use cases | Pages (direct links) | Pull requests |
+|---|---|---|---|---|
+| **Samuel O. Salado** | Resident Request | UC-01, UC-02, forgot password | [Dashboard](http://localhost:5173/?page=dashboard), [Request Document](http://localhost:5173/?page=request), [Track Requests](http://localhost:5173/?page=track), [Notifications](http://localhost:5173/?page=notifications), Forgot / Reset Password | #14, #17 |
+| **James Carl P. Rafanan** | Staff Dashboard & Releasing | UC-05, UC-06, UC-08, UC-09 | [Requests](http://localhost:5173/?role=staff&page=requests), [Reports](http://localhost:5173/?role=staff&page=reports), [Notifications](http://localhost:5173/?role=staff&page=notifications), [Announcements](http://localhost:5173/?role=staff&page=announcements) | #15, #18 |
+| **Sean Anthony P. Sanchez** | Request Management | UC-03, UC-04, UC-07 | [Manage Requests](http://localhost:5173/?page=manage), [Archive](http://localhost:5173/?page=archive), [My Profile](http://localhost:5173/?page=profile), [Activity Log](http://localhost:5173/?role=staff&page=activity) | #16, #19 |
+
+The files, endpoints and rules behind each page are listed in [docs/TASKS.md](docs/TASKS.md).
 
 More documents:
 - [docs/GIT-WORKFLOW.md](docs/GIT-WORKFLOW.md): how we use branches (read this first)
@@ -24,7 +37,7 @@ More documents:
 | Java JDK 17 or newer | adoptium.net (Temurin 17 or 21, tick "Set JAVA_HOME") | `java -version` |
 | Maven | maven.apache.org/download.cgi (unzip, add its `bin` folder to PATH). IntelliJ IDEA already includes Maven. | `mvn -v` |
 | Node.js LTS | nodejs.org | `node -v` |
-| XAMPP (MySQL) | apachefriends.org | start **MySQL** in the XAMPP Control Panel |
+| MySQL Server 8 + MySQL Workbench | dev.mysql.com/downloads/installer (remember the root password) | Workbench connects to `localhost:3306` |
 | Git | git-scm.com | `git --version` |
 | VS Code extensions | open this folder in VS Code and accept the recommended extensions | |
 
@@ -33,20 +46,23 @@ More documents:
 ```bash
 git clone https://github.com/Ryzzz44/brgy-labangon-docrequest.git
 cd brgy-labangon-docrequest
-git checkout dev
 ```
+
+The finished system is on `main`. Teammates making changes work on their `feature/...` branch and merge into `dev`
+(see [docs/GIT-WORKFLOW.md](docs/GIT-WORKFLOW.md)).
 
 ## 3. Run the backend (terminal 1)
 
-1. Start **MySQL** in XAMPP. The `brgy_labangon` database and all tables are created automatically on the first run.
-2. Run:
-   ```bash
-   cd backend
-   mvn spring-boot:run
-   ```
-3. Open http://localhost:8080/api/health. It should show `{"status":"ok"}`.
+1. Make sure the MySQL service (**MySQL84** or **MySQL80**) is running (Windows Services, or MySQL Workbench). The `brgy_labangon`
+   database and all tables are created automatically on the first run.
+2. Give the backend your MySQL root password once (PowerShell, then reopen VS Code):
+   `[Environment]::SetEnvironmentVariable("DB_PASSWORD", "yourpassword", "User")`
+3. Run the backend, either way:
+   - **VS Code:** open `backend/src/main/java/ph/brgylabangon/docrequest/DocRequestApplication.java` and click **Run** above `main`.
+   - **Terminal:** `cd backend` then `mvn spring-boot:run`.
+4. Open http://localhost:8080/api/health. It should show `{"status":"ok"}`.
 
-If your MySQL has a password, set it before running (PowerShell): `$env:DB_PASSWORD="yourpassword"`.
+XAMPP's MySQL also works, but only if no other MySQL is using port 3306.
 
 **First staff account** (created automatically when the staff table is empty):
 `staff@labangon.local` / `ChangeMe123!`. Change these with the `STAFF_EMAIL` and `STAFF_PASSWORD`
@@ -101,7 +117,7 @@ backend/src/main/java/ph/brgylabangon/docrequest/
 frontend/src/
   api/          functions that call the backend
   components/   shared UI (buttons, modals, layout)
-  pages/        Welcome, Login, Register
+  pages/        Welcome, Login, Register, Forgot / Reset Password, registry.js (page list and owners)
   pages/resident/  one file per resident tab
   pages/staff/     one file per staff tab
 ```

@@ -25,13 +25,15 @@ public class ResidentRequestService {
     private final DocumentRequestRepository requests;
     private final ResidentRepository residents;
     private final TransactionLogService transactionLog;
+    private final RequestLookupService lookup;
     private final SecureRandom random = new SecureRandom();
 
     public ResidentRequestService(DocumentRequestRepository requests, ResidentRepository residents,
-            TransactionLogService transactionLog) {
+            TransactionLogService transactionLog, RequestLookupService lookup) {
         this.requests = requests;
         this.residents = residents;
         this.transactionLog = transactionLog;
+        this.lookup = lookup;
     }
 
     @Transactional
@@ -65,6 +67,20 @@ public class ResidentRequestService {
     public List<RequestView> myRequests(AuthUser user) {
         return requests.findByResidentIdAndDeletedByResidentFalseOrderByCreatedAtDesc(user.id())
                 .stream().map(RequestView::from).toList();
+    }
+
+    /** Notification read: the resident has now seen the current status. */
+    @Transactional
+    public RequestView markSeen(AuthUser user, Long id) {
+        DocumentRequest request = lookup.getForUser(id, user); // also checks it is the resident's own request
+        request.setResidentSeenStatus(request.getStatus());
+        return RequestView.from(request); // saved automatically when the transaction ends
+    }
+
+    @Transactional
+    public void markAllSeen(AuthUser user) {
+        requests.findByResidentIdAndDeletedByResidentFalseOrderByCreatedAtDesc(user.id())
+                .forEach(r -> r.setResidentSeenStatus(r.getStatus()));
     }
 
     /** BR-2026-482913: year + 6 random digits, retried until unique. */

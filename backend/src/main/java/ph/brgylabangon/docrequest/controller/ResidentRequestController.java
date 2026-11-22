@@ -31,4 +31,15 @@ public class ResidentRequestController {
     public List<RequestView> myRequests(@AuthenticationPrincipal AuthUser user) {
         return service.myRequests(user);
     }
+
+    @PatchMapping("/{id}/seen")
+    public RequestView markSeen(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+        return service.markSeen(user, id);
+    }
+
+    @PatchMapping("/seen-all")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void markAllSeen(@AuthenticationPrincipal AuthUser user) {
+        service.markAllSeen(user);
+    }
 }

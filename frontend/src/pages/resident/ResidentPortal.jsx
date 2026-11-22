@@ -1,20 +1,57 @@
 // src/pages/resident/ResidentPortal.jsx
 // Layout for logged-in residents: sidebar (desktop), bottom tabs (phone), and the active tab.
 // Each tab lives in its own file (listed in ../registry.js) so team members do not edit the same file.
-import React, { useState } from 'react';
-import { BrandMark, IconLogout } from '../../components/ui';
+import React, { useEffect, useRef, useState } from 'react';
+import { BrandMark, IconLogout, NavBadge, NotificationPopups } from '../../components/ui';
 import { RESIDENT_PAGES as NAV_ITEMS } from '../registry';
+import { useMyRequests, isUnreadUpdate } from '../../api/requests';
+
+const POPUP_TEXT = {
+  Processed: 'was verified and is being prepared.',
+  'Ready for Pickup': 'is ready for pickup at the barangay hall.',
+  Released: 'has been released.',
+  Rejected: 'was rejected. Open Notifications for the reason.',
+  Cancelled: 'was cancelled.',
+};
 import { AnnouncementStack } from '../../components/Announcements';
 
 export default function ResidentPortal({ profile, onProfileChange, onLogout, showToast }) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { Component: Tab } = NAV_ITEMS.find((n) => n.id === activeTab);
 
+  // Unread status updates (Salado): red badge on "Notifications" and a pop-up for each new one.
+  const { requests } = useMyRequests();
+  const unread = requests.filter(isUnreadUpdate);
+  const [popups, setPopups] = useState([]);
+  const popped = useRef(new Set());
+  useEffect(() => {
+    const fresh = unread.filter((r) => !popped.current.has(`${r.id}:${r.status}`));
+    if (fresh.length === 0) return;
+    fresh.forEach((r) => popped.current.add(`${r.id}:${r.status}`));
+    if (activeTab === 'notifications') return; // already looking at them
+    setPopups((prev) => [
+      ...prev,
+      ...fresh.map((r) => ({
+        id: `${r.id}:${r.status}`,
+        status: r.status,
+        title: `${r.documentType}: ${r.status}`,
+        body: `${r.referenceNumber} ${POPUP_TEXT[r.status] || `is now ${r.status}.`}`,
+      })),
+    ].slice(-3));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requests]);
+  const badgeFor = (id) => (id === 'notifications' ? unread.length : 0);
+
   // Props every tab receives.
   const tabProps = { profile, onProfileChange, showToast, goTo: setActiveTab };
 
   return (
     <div className="min-h-screen md:flex">
+      <NotificationPopups
+        items={popups}
+        onDismiss={(id) => setPopups((prev) => prev.filter((p) => p.id !== id))}
+        onView={() => { setPopups([]); setActiveTab('notifications'); }}
+      />
       {/* Sidebar (desktop) */}
       <aside className="hidden md:flex w-64 shrink-0 bg-white rounded-3xl shadow-soft flex-col justify-between py-6 px-4 h-[calc(100vh-2rem)] sticky top-4 m-4 mr-0">
         <div className="space-y-8">
@@ -35,6 +72,7 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
                 }`}
               >
                 <Icon /> {label}
+                <NavBadge count={badgeFor(id)} className="ml-auto" />
               </button>
             ))}
           </nav>
@@ -75,7 +113,10 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
               activeTab === id ? 'text-brand' : 'text-slate-500'
             }`}
           >
-            <Icon />
+            <span className="relative">
+              <Icon />
+              <NavBadge count={badgeFor(id)} className="absolute -top-2 -right-3" />
+            </span>
             {short}
           </button>
         ))}

@@ -42,4 +42,15 @@ public class ResidentRequestController {
     public void markAllSeen(@AuthenticationPrincipal AuthUser user) {
         service.markAllSeen(user);
     }
+
+    @PatchMapping("/{id}/clear-notification")
+    public RequestView clearNotification(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+        return service.clearNotification(user, id);
+    }
+
+    @PatchMapping("/clear-notifications")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void clearAllNotifications(@AuthenticationPrincipal AuthUser user) {
+        service.clearAllNotifications(user);
+    }
 }

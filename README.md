@@ -74,6 +74,17 @@ npm run dev
 
 **Turn it off before real residents use the system:** set the environment variable `DEMO_MODE=false`.
 
+## Forgot password emails
+
+The "Forgot password?" page emails a one-time reset link (valid for 30 minutes).
+
+- **Class demo (no email set up):** the link is printed in the backend console. Look for
+  `[Forgot password] ... Reset link for ...` and open that link in the browser.
+- **Real emails (Gmail):** turn on 2-Step Verification for the Gmail account, create an
+  **App password** (Google Account > Security > App passwords), then set these environment variables
+  before starting the backend: `MAIL_HOST=smtp.gmail.com`, `MAIL_USERNAME=<the Gmail address>`,
+  `MAIL_PASSWORD=<the 16-letter app password>`. Never commit these values.
+
 ## 5. Project structure
 
 ```

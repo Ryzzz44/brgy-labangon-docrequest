@@ -11,12 +11,13 @@ export default function StaffDashboard({ staff, onLogout, showToast }) {
   const { Component: Tab } = TABS.find((t) => t.id === tab);
 
   // Staff notifications (Rafanan): red badge on the tab and a pop-up for each new resident action.
-  const { items } = useStaffNotifications();
+  const { items, loading } = useStaffNotifications(); // ← fixed
   const lastSeen = getLastSeen();
   const unreadCount = tab === 'notifications' ? 0 : items.filter((n) => isNewNotification(n, lastSeen)).length;
   const [popups, setPopups] = useState([]);
   const popped = useRef(null);
   useEffect(() => {
+    if (loading) return; // ← fixed: wait until the first list has arrived
     if (popped.current === null) { // first load: no pop-ups for old items, only for ones arriving later
       popped.current = new Set(items.map((n) => n.id));
       return;
@@ -33,7 +34,7 @@ export default function StaffDashboard({ staff, onLogout, showToast }) {
       })),
     ].slice(-3));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
+  }, [items, loading]); // ← fixed
 
   return (
     <div className="min-h-screen p-4 md:p-8">

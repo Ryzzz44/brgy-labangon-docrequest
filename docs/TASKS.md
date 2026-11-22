@@ -22,13 +22,13 @@ welcome page, resident and staff layouts, `RequestView` (shared JSON shape), `Re
 
 | Member | Pages (direct links) |
 |---|---|
-| Salado | Dashboard `?page=dashboard`, Request Document `?page=request`, Track Requests `?page=track`, Notifications `?page=notifications` |
-| Rafanan | Staff Requests `?role=staff&page=requests`, Reports `?role=staff&page=reports`, Announcements `?role=staff&page=announcements` |
+| Salado | Dashboard `?page=dashboard`, Request Document `?page=request`, Track Requests `?page=track`, Notifications `?page=notifications`, Forgot / Reset Password |
+| Rafanan | Staff Requests `?role=staff&page=requests`, Reports `?role=staff&page=reports`, Notifications `?role=staff&page=notifications`, Announcements `?role=staff&page=announcements` |
 | Sanchez | Manage Requests `?page=manage`, Archive `?page=archive`, My Profile `?page=profile`, Activity log `?role=staff&page=activity` |
 
 Endpoints under `/api/resident/**` need a resident token (or demo mode); `/api/staff/**` need a staff token
 (already enforced in `SecurityConfig`). Each member uses their own URL prefix so controllers never clash:
-Salado `/api/resident/requests`, Rafanan `/api/staff/requests`, `/api/staff/reports`, `/api/staff/announcements`, `/api/announcements`,
+Salado `/api/resident/requests`, `/api/auth/forgot-password`, `/api/auth/reset-password`, Rafanan `/api/staff/requests`, `/api/staff/reports`, `/api/staff/notifications`, `/api/staff/announcements`, `/api/announcements`,
 Sanchez `/api/resident/manage`, `/api/resident/profile`, `/api/resident/password`, `/api/staff/history`. In a controller, get the logged-in user with
 `@AuthenticationPrincipal AuthUser user`.
 
@@ -57,10 +57,19 @@ Frontend: `api/requests.js`, `pages/resident/RequestTab.jsx`
 
 ### S3. Notifications and Dashboard (UC-02)
 - `PATCH /api/resident/requests/{id}/seen` and `PATCH /api/resident/requests/seen-all`: set `residentSeenStatus = status`.
-- Frontend: `NotificationsTab.jsx` (unread = `status != residentSeenStatus`), unread badge in the nav, `DashboardTab.jsx` (greeting + counts).
+- `PATCH /api/resident/requests/{id}/clear-notification` (X) and `PATCH /api/resident/requests/clear-notifications` (Delete all):
+  set `notifClearedStatus = status`; a newer status shows up again.
+- Frontend: `NotificationsTab.jsx` (unread = `status != residentSeenStatus`, X, Delete all), unread badge and pop-ups in
+  `ResidentPortal.jsx`, `DashboardTab.jsx` (greeting, counts, latest requests, announcements).
 
-### S4. Forgot password (optional)
-- Simple version: staff can reset a resident's password at the hall. Advanced: email link with Spring Mail.
+### S4. Forgot password by email (FR Objective 1, Transaction 1)
+Backend: `entity/PasswordResetToken.java`, `repository/PasswordResetTokenRepository.java`, `dto/PasswordResetDtos.java`,
+`service/PasswordResetService.java`, `controller/PasswordResetController.java`
+- `POST /api/auth/forgot-password` `{ email }`: always the same answer (does not reveal which emails exist); if the
+  account exists, saves a SHA-256 hash of a random token (valid 30 minutes, works once) and emails the link
+  `?reset=<token>` with Spring Mail. Without `MAIL_HOST` the link is printed in the backend console.
+- `POST /api/auth/reset-password` `{ token, newPassword }`: checks the token and saves the new BCrypt password.
+- Frontend: `pages/ForgotPassword.jsx`, `pages/ResetPassword.jsx`, `api/auth.js`.
 
 ---
 
@@ -94,6 +103,14 @@ Backend: `dto/AnnouncementBody.java`, `service/AnnouncementService.java`, `contr
 - Frontend: `pages/staff/AnnouncementsTab.jsx`, `components/Announcements.jsx` (banner),
   and place the banner where the two `TODO (Rafanan)` comments are (Welcome.jsx, ResidentPortal.jsx).
 
+### R5. Staff notifications and CSV report
+Backend: `service/StaffNotificationService.java`, `controller/StaffNotificationController.java`
+- `GET /api/staff/notifications`: resident actions (submitted, updated, cancelled) from `transaction_history`, newest first.
+- `DELETE /api/staff/notifications/{id}` (X) and `DELETE /api/staff/notifications` (Delete all): set `dismissedByStaff = true`
+  (the activity log keeps the row).
+- Frontend: `pages/staff/NotificationsTab.jsx`, `api/staffNotifications.js`, badge and pop-ups in `StaffDashboard.jsx`,
+  and a **Download CSV** button in `ReportsTab.jsx`.
+
 ---
 
 ## Sean Anthony P. Sanchez: Objective 3, Request Management Module
@@ -111,6 +128,7 @@ Backend: `dto/EditRequestBody.java`, `service/RequestManagementService.java`, `c
 ### N3. Archive or Delete Completed Request (UC-07)
 - `PATCH /api/resident/manage/requests/{id}/archive` and `/unarchive`: only when status is final (Released, Rejected, Cancelled).
 - `DELETE /api/resident/manage/requests/{id}`: soft delete (`deletedByResident = true`), only when final.
+- `DELETE /api/resident/manage/requests/archived`: "Delete all" in the archive (same soft delete).
 - Frontend: `pages/resident/ArchiveTab.jsx`.
 
 ### N4. Profile and password

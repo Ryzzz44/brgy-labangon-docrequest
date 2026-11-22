@@ -1,15 +1,47 @@
 // src/pages/staff/StaffDashboard.jsx
 // Layout for logged-in staff: dark header + tab bar. Each tab is its own file (see TASKS.md for owners).
-import React, { useState } from 'react';
-import { BrandMark, IconLogout } from '../../components/ui';
+import React, { useEffect, useRef, useState } from 'react';
+import { BrandMark, IconLogout, NavBadge, NotificationPopups } from '../../components/ui';
 import { STAFF_PAGES as TABS } from '../registry';
+import { useStaffNotifications, getLastSeen, isNewNotification } from '../../api/staffNotifications';
+import { NOTIF_TITLE } from './NotificationsTab';
 
 export default function StaffDashboard({ staff, onLogout, showToast }) {
   const [tab, setTab] = useState('requests');
   const { Component: Tab } = TABS.find((t) => t.id === tab);
 
+  // Staff notifications (Rafanan): red badge on the tab and a pop-up for each new resident action.
+  const { items } = useStaffNotifications();
+  const lastSeen = getLastSeen();
+  const unreadCount = tab === 'notifications' ? 0 : items.filter((n) => isNewNotification(n, lastSeen)).length;
+  const [popups, setPopups] = useState([]);
+  const popped = useRef(null);
+  useEffect(() => {
+    if (popped.current === null) { // first load: no pop-ups for old items, only for ones arriving later
+      popped.current = new Set(items.map((n) => n.id));
+      return;
+    }
+    const fresh = items.filter((n) => !popped.current.has(n.id));
+    fresh.forEach((n) => popped.current.add(n.id));
+    if (fresh.length === 0 || tab === 'notifications') return;
+    setPopups((prev) => [
+      ...prev,
+      ...fresh.map((n) => ({
+        id: n.id,
+        title: NOTIF_TITLE[n.actionType] || 'Resident activity',
+        body: `${n.actorName} · ${n.referenceNumber}`,
+      })),
+    ].slice(-3));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
   return (
     <div className="min-h-screen p-4 md:p-8">
+      <NotificationPopups
+        items={popups}
+        onDismiss={(id) => setPopups((prev) => prev.filter((p) => p.id !== id))}
+        onView={() => { setPopups([]); setTab('notifications'); }}
+      />
       <div className="max-w-6xl mx-auto space-y-6">
         <header className="relative overflow-hidden rounded-[2rem] bg-[#0B0B1A] text-white flex flex-col md:flex-row md:items-center justify-between gap-5 px-6 py-6 md:px-8 print:hidden">
           <div className="absolute -right-16 -top-24 w-72 h-72 rounded-full bg-brand/50 blur-[90px]" />
@@ -31,11 +63,12 @@ export default function StaffDashboard({ staff, onLogout, showToast }) {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition ${
+              className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition ${
                 tab === t.id ? 'bg-brand-soft text-brand' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
               {t.label}
+              {t.id === 'notifications' && <NavBadge count={unreadCount} />}
             </button>
           ))}
         </nav>

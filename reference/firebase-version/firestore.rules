@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    // Staff = a Firebase Auth user that has a document at Staff/{their uid}.
+    // Only an administrator can create these, in the Firebase console.
+    function isStaff() {
+      return signedIn() && exists(/databases/$(database)/documents/Staff/$(request.auth.uid));
+    }
+
+    match /Staff/{uid} {
+      allow read: if isOwner(uid);   // lets the sign-in screen check its own role
+      allow write: if false;         // console only
+    }
+
+    match /Residents/{uid} {
+      allow read: if isOwner(uid) || isStaff();
+      allow create, update: if isOwner(uid)
+        && request.resource.data.full_name is string && request.resource.data.full_name.size() < 200
+        && (!('valid_id_url' in request.resource.data) || request.resource.data.valid_id_url.size() < 950000);
+      allow delete: if false;
+    }
+
+    match /DocumentRequest/{id} {
+      allow read: if isStaff() || (signedIn() && resource.data.resident_uid == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.resident_uid == request.auth.uid
+        && request.resource.data.status == 'Pending';
+
+      allow update: if isStaff()
+        || (isOwner(resource.data.resident_uid)
+            && request.resource.data.resident_uid == resource.data.resident_uid
+            && request.resource.data.reference_number == resource.data.reference_number
+            && (
+              // archive / delete-from-view / notification bookkeeping
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                'archived_by_resident', 'deleted_by_resident',
+                'resident_seen_status', 'resident_notif_cleared_status'])
+              ||
+              // edit or cancel, only while still Pending
+              (resource.data.status == 'Pending'
+                && request.resource.data.status in ['Pending', 'Cancelled']
+                && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                  'document_type', 'purpose', 'has_staff_seen_update', 'updated_at',
+                  'status', 'resident_seen_status']))
+            ));
+
+      allow delete: if false;
+    }
+
+    // Audit log: append-only. Residents may add their own entries; only staff can read it.
+    match /TransactionHistory/{id} {
+      allow read: if isStaff();
+      allow create: if isStaff()
+        || (signedIn() && request.resource.data.actor_role == 'Resident');
+      allow update, delete: if false;
+    }
+
+    // Announcements are public notices: anyone can read them (even before signing in);
+    // only staff can post, end or delete them.
+    match /Announcements/{id} {
+      allow read: if true;
+      allow create, update, delete: if isStaff();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

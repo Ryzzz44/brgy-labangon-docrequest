@@ -1,0 +1,9 @@
+# Netlify settings (only if the frontend is deployed later; set VITE_API_URL in Netlify's environment variables).
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

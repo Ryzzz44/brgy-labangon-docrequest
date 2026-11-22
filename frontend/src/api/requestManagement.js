@@ -17,3 +17,6 @@ export const unarchiveRequest = (id) => api.patch(`/api/resident/manage/requests
 
 // DELETE /api/resident/manage/requests/{id} -> remove a finished request from my list
 export const deleteRequest = (id) => api.del(`/api/resident/manage/requests/${id}`);
+
+// DELETE /api/resident/manage/requests/archived -> "Delete all" in the archive ({ deleted: n })
+export const deleteAllArchived = () => api.del('/api/resident/manage/requests/archived');

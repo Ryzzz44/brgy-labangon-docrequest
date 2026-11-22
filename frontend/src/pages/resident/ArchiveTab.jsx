@@ -3,7 +3,7 @@
 // Top: finished requests that can be archived. Bottom: the archive, where requests can be restored or deleted.
 import React, { useEffect, useState } from 'react';
 import { Modal, StatusBadge, IconArchive, IconTrash, formatDate, btnPrimary, btnSecondary, btnDanger, cardCls } from '../../components/ui';
-import { getManagedRequests, archiveRequest, unarchiveRequest, deleteRequest } from '../../api/requestManagement';
+import { getManagedRequests, archiveRequest, unarchiveRequest, deleteRequest, deleteAllArchived } from '../../api/requestManagement';
 
 function RequestRow({ r, children }) {
   return (
@@ -22,6 +22,7 @@ export default function ArchiveTab({ showToast }) {
   const [completed, setCompleted] = useState([]);
   const [archived, setArchived] = useState([]);
   const [deleting, setDeleting] = useState(null);
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   const load = async () => {
     try {
@@ -71,7 +72,13 @@ export default function ArchiveTab({ showToast }) {
       </section>
 
       <section className={`${cardCls} p-6`}>
-        <h2 className="text-sm font-semibold text-slate-900">Archived ({archived.length})</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-slate-900">Archived ({archived.length})</h2>
+          <button onClick={() => setConfirmDeleteAll(true)} disabled={archived.length === 0}
+            className={`${btnDanger} ${small} disabled:opacity-40`}>
+            <IconTrash className="w-4 h-4" /> Delete all
+          </button>
+        </div>
         {archived.length === 0 && <p className="text-sm text-slate-400 py-4">Your archive is empty.</p>}
         <ul className="divide-y divide-slate-100">
           {archived.map((r) => (
@@ -84,6 +91,26 @@ export default function ArchiveTab({ showToast }) {
           ))}
         </ul>
       </section>
+
+      {confirmDeleteAll && (
+        <Modal title="Delete all archived requests?" onClose={() => setConfirmDeleteAll(false)} maxWidth="max-w-md">
+          <p className="text-sm text-slate-600">
+            {archived.length} request{archived.length === 1 ? '' : 's'} will be removed from your list. The barangay keeps its own record.
+          </p>
+          <div className="flex gap-2 pt-5">
+            <button onClick={() => setConfirmDeleteAll(false)} className={btnSecondary}>Keep them</button>
+            <button
+              onClick={() => {
+                setConfirmDeleteAll(false);
+                act(deleteAllArchived, 'Archive cleared.');
+              }}
+              className={`${btnPrimary} flex-1 !bg-rose-600 hover:!bg-rose-700`}
+            >
+              Delete all
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {deleting && (
         <Modal title="Delete this request?" subtitle={deleting.referenceNumber} onClose={() => setDeleting(null)} maxWidth="max-w-md">

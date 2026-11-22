@@ -2,6 +2,7 @@ package ph.brgylabangon.docrequest.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +49,12 @@ public class RequestManagementController {
     @PatchMapping("/{id}/unarchive")
     public RequestView unarchive(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
         return service.setArchived(user, id, false);
+    }
+
+    /** DELETE /api/resident/manage/requests/archived -> "Delete all" in the archive */
+    @DeleteMapping("/archived")
+    public Map<String, Integer> deleteAllArchived(@AuthenticationPrincipal AuthUser user) {
+        return Map.of("deleted", service.deleteAllArchived(user));
     }
 
     @DeleteMapping("/{id}")

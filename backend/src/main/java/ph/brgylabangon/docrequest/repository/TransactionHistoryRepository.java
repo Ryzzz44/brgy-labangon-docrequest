@@ -1,10 +1,17 @@
 package ph.brgylabangon.docrequest.repository;
 
 import java.util.List;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ph.brgylabangon.docrequest.entity.TransactionHistory;
 
 public interface TransactionHistoryRepository extends JpaRepository<TransactionHistory, Long> {
     List<TransactionHistory> findByRequestIdOrderByTimestampDesc(Long requestId);
     List<TransactionHistory> findAllByOrderByTimestampDesc();
+
+    /** Staff notifications: resident actions not yet removed by staff, newest first. */
+    @EntityGraph(attributePaths = "request")
+    List<TransactionHistory> findTop100ByActorRoleAndDismissedByStaffFalseOrderByTimestampDesc(String actorRole);
+
+    List<TransactionHistory> findByActorRoleAndDismissedByStaffFalse(String actorRole);
 }

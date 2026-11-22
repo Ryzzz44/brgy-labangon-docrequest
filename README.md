@@ -6,7 +6,7 @@ barangay staff verify, process and release them.
 | Part | Technology | Folder |
 |---|---|---|
 | Frontend (screens) | React 18 + Vite + Tailwind CSS 4 | [`frontend/`](frontend) |
-| Backend (API, rules) | Spring Boot 3.3 (Java 21), Spring Security + JWT | [`backend/`](backend) |
+| Backend (API, rules) | Spring Boot 3.3 (Java 17+), Spring Security + JWT | [`backend/`](backend) |
 | Database | MySQL 8 (XAMPP or MySQL Workbench) | created automatically |
 
 More documents:
@@ -21,7 +21,7 @@ More documents:
 
 | Tool | Where | Check with |
 |---|---|---|
-| Java JDK 21 | adoptium.net (Temurin 21, tick "Set JAVA_HOME") | `java -version` |
+| Java JDK 17 or newer | adoptium.net (Temurin 17 or 21, tick "Set JAVA_HOME") | `java -version` |
 | Maven | maven.apache.org/download.cgi (unzip, add its `bin` folder to PATH). IntelliJ IDEA already includes Maven. | `mvn -v` |
 | Node.js LTS | nodejs.org | `node -v` |
 | XAMPP (MySQL) | apachefriends.org | start **MySQL** in the XAMPP Control Panel |

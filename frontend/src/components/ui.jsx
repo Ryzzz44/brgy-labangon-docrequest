@@ -1,5 +1,6 @@
 // src/components/ui.jsx
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 /* ---------- Icons (stroke, no emojis) ---------- */
 const Svg = ({ children, className = 'w-[18px] h-[18px]' }) => (
@@ -153,8 +154,10 @@ export function LoadingOverlay({ label = 'Please wait...' }) {
 }
 
 /* ---------- Modal ---------- */
+// Drawn directly inside <body> (a "portal"), so it always covers the whole page,
+// including the announcement banners, no matter which page opened it.
 export function Modal({ title, subtitle, onClose, children, maxWidth = 'max-w-2xl' }) {
-  return (
+  return createPortal(
     <div
       className="backdrop-enter fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 flex items-center justify-center p-4 print:hidden"
     >
@@ -174,7 +177,8 @@ export function Modal({ title, subtitle, onClose, children, maxWidth = 'max-w-2x
         </div>
         <div className="p-6 overflow-y-auto">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

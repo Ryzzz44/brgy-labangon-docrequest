@@ -1,9 +1,10 @@
 // src/pages/resident/ArchiveTab.jsx
 // OWNER: Sean Anthony P. Sanchez (UC-07 Archive or Delete Completed Request)
-// Top: finished requests that can be archived. Bottom: the archive, where requests can be restored or deleted.
+// Requests the resident archived from Track Requests. Each one can be restored or deleted (soft delete:
+// it disappears from the resident's list, but the barangay keeps the record).
 import React, { useEffect, useState } from 'react';
 import { Modal, StatusBadge, IconArchive, IconTrash, formatDate, btnPrimary, btnSecondary, btnDanger, cardCls } from '../../components/ui';
-import { getManagedRequests, archiveRequest, unarchiveRequest, deleteRequest, deleteAllArchived } from '../../api/requestManagement';
+import { getManagedRequests, unarchiveRequest, deleteRequest, deleteAllArchived } from '../../api/requestManagement';
 import { onLive } from '../../api/live';
 
 function RequestRow({ r, children }) {
@@ -20,16 +21,13 @@ function RequestRow({ r, children }) {
 }
 
 export default function ArchiveTab({ showToast }) {
-  const [completed, setCompleted] = useState([]);
   const [archived, setArchived] = useState([]);
   const [deleting, setDeleting] = useState(null);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
 
   const load = async () => {
     try {
-      const [done, arch] = await Promise.all([getManagedRequests('completed'), getManagedRequests('archived')]);
-      setCompleted(done);
-      setArchived(arch);
+      setArchived(await getManagedRequests('archived'));
     } catch (err) {
       showToast(err.message, 'error');
     }
@@ -41,7 +39,7 @@ export default function ArchiveTab({ showToast }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Runs an action, shows a message, and reloads both lists.
+  // Runs an action, shows a message, and reloads the list.
   const act = async (fn, okMessage) => {
     try {
       await fn();
@@ -56,46 +54,40 @@ export default function ArchiveTab({ showToast }) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-900">Archive</h1>
-        <p className="text-sm text-slate-500 mt-1">Keep your list tidy by archiving requests that are finished.</p>
-      </div>
-
-      <section className={`${cardCls} p-6`}>
-        <h2 className="text-sm font-semibold text-slate-900">Finished requests</h2>
-        <p className="text-xs text-slate-500 mt-0.5">Released, rejected or cancelled requests you can archive.</p>
-        {completed.length === 0 && <p className="text-sm text-slate-400 py-4">Nothing to archive.</p>}
-        <ul className="divide-y divide-slate-100">
-          {completed.map((r) => (
-            <RequestRow key={r.id} r={r}>
-              <button onClick={() => act(() => archiveRequest(r.id), 'Moved to archive.')} className={`${btnSecondary} ${small}`}>
-                <IconArchive className="w-4 h-4" /> Archive
-              </button>
-            </RequestRow>
-          ))}
-        </ul>
-      </section>
-
-      <section className={`${cardCls} p-6`}>
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-slate-900">Archived ({archived.length})</h2>
-          <button onClick={() => setConfirmDeleteAll(true)} disabled={archived.length === 0}
-            className={`${btnDanger} ${small} disabled:opacity-40`}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-3xl font-semibold tracking-tight text-slate-900">Archive</h1>
+          <p className="text-sm text-slate-500 mt-1">Completed requests you have tidied away. Restore or delete them anytime.</p>
+        </div>
+        {archived.length > 0 && (
+          <button onClick={() => setConfirmDeleteAll(true)} className={`${btnDanger} ${small}`}>
             <IconTrash className="w-4 h-4" /> Delete all
           </button>
+        )}
+      </div>
+
+      {archived.length === 0 ? (
+        <div className={`${cardCls} p-10 text-center space-y-2`}>
+          <span className="w-11 h-11 rounded-2xl bg-brand-soft text-brand flex items-center justify-center mx-auto">
+            <IconArchive />
+          </span>
+          <p className="text-sm font-medium text-slate-700">Your archive is empty</p>
+          <p className="text-xs text-slate-400">Released, rejected or cancelled requests can be archived from Track Requests.</p>
         </div>
-        {archived.length === 0 && <p className="text-sm text-slate-400 py-4">Your archive is empty.</p>}
-        <ul className="divide-y divide-slate-100">
-          {archived.map((r) => (
-            <RequestRow key={r.id} r={r}>
-              <button onClick={() => act(() => unarchiveRequest(r.id), 'Restored.')} className={`${btnSecondary} ${small}`}>Restore</button>
-              <button onClick={() => setDeleting(r)} className={`${btnDanger} ${small}`}>
-                <IconTrash className="w-4 h-4" /> Delete
-              </button>
-            </RequestRow>
-          ))}
-        </ul>
-      </section>
+      ) : (
+        <section className={`${cardCls} p-6`}>
+          <ul className="divide-y divide-slate-100">
+            {archived.map((r) => (
+              <RequestRow key={r.id} r={r}>
+                <button onClick={() => act(() => unarchiveRequest(r.id), 'Restored to Track Requests.')} className={`${btnSecondary} ${small}`}>Restore</button>
+                <button onClick={() => setDeleting(r)} className={`${btnDanger} ${small}`}>
+                  <IconTrash className="w-4 h-4" /> Delete
+                </button>
+              </RequestRow>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {confirmDeleteAll && (
         <Modal title="Delete all archived requests?" onClose={() => setConfirmDeleteAll(false)} maxWidth="max-w-md">

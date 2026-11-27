@@ -4,7 +4,7 @@
 // that the resident must acknowledge once. Data: GET /api/announcements/active (no login needed).
 import React, { useEffect, useState } from 'react';
 import { IconBell, IconX, btnPrimary } from './ui';
-import { getActiveAnnouncements } from '../api/announcements';
+import { getActiveAnnouncements, ANNOUNCEMENTS_CHANNEL } from '../api/announcements';
 
 export const LEVELS = {
   urgent: { label: 'Urgent', banner: 'bg-rose-600 text-white', chip: 'bg-rose-100 text-rose-700 ring-rose-200' },
@@ -20,14 +20,27 @@ const writeSet = (key, set) => {
   try { localStorage.setItem(key, JSON.stringify([...set])); } catch { /* storage blocked */ }
 };
 
-// Loads active announcements now and every 60 seconds.
+// Loads active announcements now, every 3 seconds, when the resident comes back to the tab,
+// and right away when staff post one from another tab of this browser.
 export function useActiveAnnouncements() {
   const [items, setItems] = useState([]);
   useEffect(() => {
     const load = () => getActiveAnnouncements().then(setItems).catch(() => {});
     load();
-    const timer = setInterval(load, 60000);
-    return () => clearInterval(timer);
+    const timer = setInterval(load, 3000);
+    window.addEventListener('focus', load);
+
+    let channel = null;
+    try {
+      channel = new BroadcastChannel(ANNOUNCEMENTS_CHANNEL);
+      channel.onmessage = load;
+    } catch { /* old browser: the timer still works */ }
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', load);
+      if (channel) channel.close();
+    };
   }, []);
   return items;
 }

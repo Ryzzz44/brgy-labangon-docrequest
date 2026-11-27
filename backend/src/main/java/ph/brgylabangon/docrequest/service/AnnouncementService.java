@@ -18,10 +18,13 @@ public class AnnouncementService {
 
     private final AnnouncementRepository announcements;
     private final StaffRepository staffRepository;
+    private final LiveUpdateService live;
 
-    public AnnouncementService(AnnouncementRepository announcements, StaffRepository staffRepository) {
+    public AnnouncementService(AnnouncementRepository announcements, StaffRepository staffRepository,
+            LiveUpdateService live) {
         this.announcements = announcements;
         this.staffRepository = staffRepository;
+        this.live = live;
     }
 
     /** For residents: active announcements that have not expired yet. */
@@ -51,7 +54,9 @@ public class AnnouncementService {
         if (body.durationHours() != null && body.durationHours() > 0) {
             a.setExpiresAt(LocalDateTime.now().plusHours(body.durationHours()));
         }
-        return AnnouncementView.from(announcements.save(a));
+        AnnouncementView saved = AnnouncementView.from(announcements.save(a));
+        live.publish("announcements"); // residents see it right away
+        return saved;
     }
 
     /** Ends an announcement early; it stays in the list for records. */
@@ -59,6 +64,7 @@ public class AnnouncementService {
     public AnnouncementView deactivate(Long id) {
         Announcement a = announcements.findById(id).orElseThrow(() -> ApiException.notFound("Announcement"));
         a.setActive(false);
+        live.publish("announcements");
         return AnnouncementView.from(a);
     }
 
@@ -67,5 +73,6 @@ public class AnnouncementService {
         if (!announcements.existsById(id))
             throw ApiException.notFound("Announcement");
         announcements.deleteById(id);
+        live.publish("announcements");
     }
 }

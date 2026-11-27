@@ -4,7 +4,8 @@
 // that the resident must acknowledge once. Data: GET /api/announcements/active (no login needed).
 import React, { useEffect, useState } from 'react';
 import { IconBell, IconX, btnPrimary } from './ui';
-import { getActiveAnnouncements, ANNOUNCEMENTS_CHANNEL } from '../api/announcements';
+import { getActiveAnnouncements } from '../api/announcements';
+import { onLive } from '../api/live';
 
 export const LEVELS = {
   urgent: { label: 'Urgent', banner: 'bg-rose-600 text-white', chip: 'bg-rose-100 text-rose-700 ring-rose-200' },
@@ -20,26 +21,18 @@ const writeSet = (key, set) => {
   try { localStorage.setItem(key, JSON.stringify([...set])); } catch { /* storage blocked */ }
 };
 
-// Loads active announcements now, every 3 seconds, when the resident comes back to the tab,
-// and right away when staff post one from another tab of this browser.
+// Loads active announcements now, and again right away when staff post, end or delete one
+// (live update from the server). The 60-second check also hides announcements whose time is up.
 export function useActiveAnnouncements() {
   const [items, setItems] = useState([]);
   useEffect(() => {
     const load = () => getActiveAnnouncements().then(setItems).catch(() => {});
     load();
-    const timer = setInterval(load, 3000);
-    window.addEventListener('focus', load);
-
-    let channel = null;
-    try {
-      channel = new BroadcastChannel(ANNOUNCEMENTS_CHANNEL);
-      channel.onmessage = load;
-    } catch { /* old browser: the timer still works */ }
-
+    const timer = setInterval(load, 60000);
+    const stopLive = onLive('announcements', load);
     return () => {
       clearInterval(timer);
-      window.removeEventListener('focus', load);
-      if (channel) channel.close();
+      stopLive();
     };
   }, []);
   return items;

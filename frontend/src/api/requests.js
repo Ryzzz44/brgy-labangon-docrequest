@@ -1,9 +1,10 @@
 // src/api/requests.js - Salado's API calls (ResidentRequestController in the backend).
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './client';
+import { onLive } from './live';
 
 // After a change (submit, read, delete), every part of the page that shows my requests
-// (the page itself, the sidebar badge, the pop-ups) reloads at once instead of waiting 15 seconds.
+// (the page itself, the sidebar badge, the pop-ups) reloads at once.
 const CHANGED = 'requests:changed';
 const andRefresh = (promise) =>
   promise.then((result) => {
@@ -33,7 +34,8 @@ export const clearAllNotifications = () => andRefresh(api.patch('/api/resident/r
 // A status update the resident has not read yet (also used for the red badge and pop-ups).
 export const isUnreadUpdate = (r) => r.status !== 'Pending' && r.status !== r.residentSeenStatus;
 
-// Hook: loads my requests and reloads them every 15 seconds, so status changes made by staff appear by themselves.
+// Hook: loads my requests and reloads them right away when the server says requests changed (live update),
+// for example when staff mark one as Processed. A slow 30-second check is kept as a backup.
 // Usage in a page: const { requests, loading, error, reload } = useMyRequests();
 export function useMyRequests() {
   const [requests, setRequests] = useState([]);
@@ -53,10 +55,12 @@ export function useMyRequests() {
 
   useEffect(() => {
     reload();
-    const timer = setInterval(reload, 15000);
-    window.addEventListener(CHANGED, reload); // reload right after a change
+    const timer = setInterval(reload, 30000);
+    const stopLive = onLive('requests', reload);
+    window.addEventListener(CHANGED, reload); // reload right after my own change (read, delete)
     return () => {
       clearInterval(timer); // stop when the page closes
+      stopLive();
       window.removeEventListener(CHANGED, reload);
     };
   }, [reload]);

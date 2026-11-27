@@ -1,12 +1,10 @@
 // src/pages/resident/DashboardTab.jsx
 // OWNER: Samuel O. Salado (UC-02 Track Request Status: overview)
-// Greeting, request counts, the 3 latest requests and the barangay announcements.
-// Data: useMyRequests() and GET /api/announcements/active (public).
-import React, { useEffect, useState } from 'react';
+// Greeting, request counts and the 3 latest requests. Data: useMyRequests().
+// (Announcements are shown as banners at the top of every resident page, see components/Announcements.jsx.)
+import React from 'react';
 import { StatCard, StatusBadge, formatDate, btnPrimary, btnSecondary, cardCls } from '../../components/ui';
 import { useMyRequests } from '../../api/requests';
-import { getActiveAnnouncements } from '../../api/announcements';
-import { LEVELS } from '../../components/Announcements';
 
 const greeting = () => {
   const hour = new Date().getHours();
@@ -17,10 +15,6 @@ const greeting = () => {
 
 export default function DashboardTab({ profile, goTo }) {
   const { requests } = useMyRequests();
-  const [announcements, setAnnouncements] = useState([]);
-  useEffect(() => {
-    getActiveAnnouncements().then(setAnnouncements).catch(() => setAnnouncements([]));
-  }, []);
   const count = (...statuses) => requests.filter((r) => statuses.includes(r.status)).length;
   const firstName = (profile?.fullName || 'Resident').split(' ')[0];
 
@@ -55,20 +49,6 @@ export default function DashboardTab({ profile, goTo }) {
                 <p className="text-[11px] text-slate-400">{r.referenceNumber} &middot; {formatDate(r.createdAt)}</p>
               </div>
               <StatusBadge status={r.status} />
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className={`${cardCls} p-6 space-y-4`}>
-        <h2 className="text-sm font-semibold text-slate-900">Barangay announcements</h2>
-        {announcements.length === 0 && <p className="text-sm text-slate-400">No announcements right now.</p>}
-        <ul className="space-y-3">
-          {announcements.map((a) => (
-            <li key={a.id} className={`rounded-2xl px-4 py-3 ${(LEVELS[a.level] || LEVELS.info).banner}`}>
-              <p className="text-sm font-semibold">{a.title}</p>
-              <p className="text-sm mt-0.5 whitespace-pre-line">{a.message}</p>
-              <p className="text-[11px] opacity-70 mt-1">{formatDate(a.createdAt)}</p>
             </li>
           ))}
         </ul>

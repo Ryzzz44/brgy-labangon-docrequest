@@ -83,7 +83,7 @@ export default function NotificationsTab({ showToast }) {
               {r.status === 'Rejected' && r.rejectionReason && (
                 <p className="text-xs text-rose-700 mt-1">Reason: {r.rejectionReason}</p>
               )}
-              <p className="text-[11px] text-slate-400 mt-1">{formatDate(r.updatedAt)}</p>
+              <p className="text-[11px] text-slate-400 mt-1">{formatDate(r.statusChangedAt || r.updatedAt)}</p>
             </div>
             <StatusBadge status={r.status} />
             <button

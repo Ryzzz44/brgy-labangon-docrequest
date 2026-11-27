@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { BrandMark, IconLogout, NavBadge, NotificationPopups } from '../../components/ui';
 import { RESIDENT_PAGES as NAV_ITEMS } from '../registry';
 import { useMyRequests, isUnreadUpdate } from '../../api/requests';
+import { AnnouncementStack } from '../../components/Announcements';
 
 const POPUP_TEXT = {
   Processed: 'was verified and is being prepared.',
@@ -13,7 +14,6 @@ const POPUP_TEXT = {
   Rejected: 'was rejected. Open Notifications for the reason.',
   Cancelled: 'was cancelled.',
 };
-import { AnnouncementStack } from '../../components/Announcements';
 
 export default function ResidentPortal({ profile, onProfileChange, onLogout, showToast }) {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -24,6 +24,7 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
   const unread = requests.filter(isUnreadUpdate);
   const [popups, setPopups] = useState([]);
   const popped = useRef(new Set());
+
   useEffect(() => {
     const fresh = unread.filter((r) => !popped.current.has(`${r.id}:${r.status}`));
     if (fresh.length === 0) return;
@@ -40,6 +41,12 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
     ].slice(-3));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requests]);
+
+  // On the Notifications page the updates are already in view, so close the pop-ups.
+  useEffect(() => {
+    if (activeTab === 'notifications') setPopups([]);
+  }, [activeTab]);
+
   const badgeFor = (id) => (id === 'notifications' ? unread.length : 0);
 
   // Props every tab receives.
@@ -52,6 +59,7 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
         onDismiss={(id) => setPopups((prev) => prev.filter((p) => p.id !== id))}
         onView={() => { setPopups([]); setActiveTab('notifications'); }}
       />
+
       {/* Sidebar (desktop) */}
       <aside className="hidden md:flex w-64 shrink-0 bg-white rounded-3xl shadow-soft flex-col justify-between py-6 px-4 h-[calc(100vh-2rem)] sticky top-4 m-4 mr-0">
         <div className="space-y-8">
@@ -77,8 +85,10 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
             ))}
           </nav>
         </div>
-        <button onClick={onLogout}
-          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition">
+        <button
+          onClick={onLogout}
+          className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition"
+        >
           <IconLogout /> Log out
         </button>
       </aside>
@@ -95,7 +105,7 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
       </div>
 
       <main className="flex-1 min-w-0 p-5 pb-28 md:p-10">
-                {/* Announcements from staff (Rafanan, UC-09) */}
+        {/* Announcements from staff (Rafanan, UC-09) */}
         <AnnouncementStack className="sticky top-16 md:top-4 z-20 max-w-5xl mx-auto mb-6" />
         <div key={activeTab} className="tab-enter max-w-5xl mx-auto">
           <Tab {...tabProps} />

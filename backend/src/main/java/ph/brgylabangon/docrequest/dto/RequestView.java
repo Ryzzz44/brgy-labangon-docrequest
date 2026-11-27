@@ -26,7 +26,8 @@ public record RequestView(
         String residentName,
         String residentContactNumber,
         String residentAddress,
-        RequestStatus notifClearedStatus) {
+        RequestStatus notifClearedStatus,
+        LocalDateTime statusChangedAt) {
 
     public static RequestView from(DocumentRequest r) {
         var res = r.getResident();
@@ -34,6 +35,6 @@ public record RequestView(
                 r.getStatus(), r.getRejectionReason(), r.getResidentSeenStatus(), r.isSeenByStaff(),
                 r.isArchivedByResident(), r.getValidIdImage(), r.getCreatedAt(), r.getUpdatedAt(),
                 res.getId(), res.getFullName(), res.getContactNumber(), res.getAddress(),
-                r.getNotifClearedStatus());
+                r.getNotifClearedStatus(), r.getStatusChangedAt());
     }
 }

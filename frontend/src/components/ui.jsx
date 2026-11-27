@@ -1,5 +1,5 @@
 // src/components/ui.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 /* ---------- Icons (stroke, no emojis) ---------- */
@@ -231,30 +231,44 @@ const POPUP_TONE = {
   Cancelled: 'bg-slate-100 text-slate-600',
 };
 
+// Each pop-up closes by itself after 10 seconds (or earlier with X / "View update").
+const POPUP_SECONDS = 10;
+
+function PopupCard({ n, onDismiss, onView }) {
+  useEffect(() => {
+    const timer = setTimeout(() => onDismiss(n.id), POPUP_SECONDS * 1000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [n.id]);
+
+  return (
+    <div
+      role="alert"
+      className="pointer-events-auto animate-pop bg-white rounded-2xl shadow-lift ring-1 ring-slate-900/5 p-4 flex gap-3"
+    >
+      <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${POPUP_TONE[n.status] || 'bg-brand-soft text-brand'}`}>
+        <IconBell className="w-4 h-4" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
+        <p className="text-xs text-slate-600 mt-0.5 break-words">{n.body}</p>
+        <button onClick={() => onView(n)} className="text-xs font-semibold text-brand hover:underline mt-2">
+          View update
+        </button>
+      </div>
+      <button onClick={() => onDismiss(n.id)} aria-label="Dismiss" className="text-slate-400 hover:text-slate-700 self-start p-0.5">
+        <IconX className="w-4 h-4" />
+      </button>
+    </div>
+  );
+}
+
 export function NotificationPopups({ items, onDismiss, onView }) {
   if (!items.length) return null;
   return (
     <div className="fixed z-[110] top-4 right-4 left-4 sm:left-auto sm:w-80 space-y-3 pointer-events-none">
       {items.map((n) => (
-        <div
-          key={n.id}
-          role="alert"
-          className="pointer-events-auto animate-pop bg-white rounded-2xl shadow-lift ring-1 ring-slate-900/5 p-4 flex gap-3"
-        >
-          <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${POPUP_TONE[n.status] || 'bg-brand-soft text-brand'}`}>
-            <IconBell className="w-4 h-4" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-slate-900 truncate">{n.title}</p>
-            <p className="text-xs text-slate-600 mt-0.5 break-words">{n.body}</p>
-            <button onClick={() => onView(n)} className="text-xs font-semibold text-brand hover:underline mt-2">
-              View update
-            </button>
-          </div>
-          <button onClick={() => onDismiss(n.id)} aria-label="Dismiss" className="text-slate-400 hover:text-slate-700 self-start p-0.5">
-            <IconX className="w-4 h-4" />
-          </button>
-        </div>
+        <PopupCard key={n.id} n={n} onDismiss={onDismiss} onView={onView} />
       ))}
     </div>
   );

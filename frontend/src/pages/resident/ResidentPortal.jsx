@@ -30,15 +30,16 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
     if (fresh.length === 0) return;
     fresh.forEach((r) => popped.current.add(`${r.id}:${r.status}`));
     if (activeTab === 'notifications') return; // already looking at them
-    setPopups((prev) => [
-      ...prev,
-      ...fresh.map((r) => ({
-        id: `${r.id}:${r.status}`,
-        status: r.status,
-        title: `${r.documentType}: ${r.status}`,
-        body: `${r.referenceNumber} ${POPUP_TEXT[r.status] || `is now ${r.status}.`}`,
-      })),
-    ].slice(-3));
+    // Three or more at once (for example right after logging in): one summary pop-up instead of a pile.
+    const items = fresh.length > 2
+      ? [{ id: `summary-${Date.now()}`, title: 'New updates', body: `You have ${fresh.length} new request updates.` }]
+      : fresh.map((r) => ({
+          id: `${r.id}:${r.status}`,
+          status: r.status,
+          title: `${r.documentType}: ${r.status}`,
+          body: `${r.referenceNumber} ${POPUP_TEXT[r.status] || `is now ${r.status}.`}`,
+        }));
+    setPopups((prev) => [...prev, ...items].slice(-3));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requests]);
 
@@ -113,7 +114,7 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
       </main>
 
       {/* Bottom tab bar (phone) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 grid grid-cols-7 px-1 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 backdrop-blur border-t border-slate-200 grid grid-cols-6 px-1 pt-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {NAV_ITEMS.map(({ id, short, icon: Icon }) => (
           <button
             key={id}

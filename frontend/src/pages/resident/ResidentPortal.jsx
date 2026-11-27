@@ -106,7 +106,7 @@ export default function ResidentPortal({ profile, onProfileChange, onLogout, sho
 
       <main className="flex-1 min-w-0 p-5 pb-28 md:p-10">
         {/* Announcements from staff (Rafanan, UC-09) */}
-        <AnnouncementStack className="sticky top-16 md:top-4 z-20 max-w-5xl mx-auto mb-6" />
+        <AnnouncementStack className="max-w-5xl mx-auto mb-6" />
         <div key={activeTab} className="tab-enter max-w-5xl mx-auto">
           <Tab {...tabProps} />
         </div>

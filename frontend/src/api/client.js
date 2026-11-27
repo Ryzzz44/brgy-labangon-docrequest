@@ -3,7 +3,10 @@
 // Every member's feature calls api.get / api.post / api.put / api.patch / api.del from here.
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-const TOKEN_KEY = 'brgy_token';
+// Residents and staff keep separate logins (the staff pages have ?role=staff in the address),
+// so both can stay logged in at the same time in different tabs of the same browser.
+const AREA = new URLSearchParams(window.location.search).get('role') === 'staff' ? 'staff' : 'resident';
+const TOKEN_KEY = `brgy_token_${AREA}`;
 
 export const getToken = () => {
   try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }

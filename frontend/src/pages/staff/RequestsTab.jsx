@@ -7,6 +7,7 @@ import {
 } from '../../components/ui';
 import { STATUSES } from '../../utils/constants';
 import { getAllRequests, markSeenByStaff, updateStatus } from '../../api/staff';
+import { onLive } from '../../api/live';
 
 // The button staff click for each status, and the status it moves the request to.
 const NEXT_STEP = {
@@ -36,11 +37,16 @@ export default function RequestsTab({ showToast }) {
     }
   };
 
-  // Load once, then every 15 seconds so new resident requests appear by themselves.
+  // Load once, then reload right away whenever the server says requests changed (live update).
+  // A slow 30-second check is kept as a backup.
   useEffect(() => {
     load();
-    const timer = setInterval(load, 15000);
-    return () => clearInterval(timer);
+    const timer = setInterval(load, 30000);
+    const stopLive = onLive('requests', load);
+    return () => {
+      clearInterval(timer);
+      stopLive();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -22,7 +22,7 @@ export default function RequestsTab({ showToast }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [selected, setSelected] = useState(null);       // request shown in the modal
+  const [selectedId, setSelectedId] = useState(null);   // id of the request shown in the modal
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
@@ -50,14 +50,22 @@ export default function RequestsTab({ showToast }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const openRequest = async (r) => {
-    setSelected(r);
+  // The modal always shows the LATEST copy from the list, so if the resident edits or cancels
+  // while staff are looking at it, the modal changes right away (live update) and shows a notice.
+  const selected = selectedId ? requests.find((r) => r.id === selectedId) : null;
+  const closeModal = () => setSelectedId(null);
+
+  // Mark as seen on the screen right away, then tell the server.
+  const markSeen = (id) => {
+    setRequests((prev) => prev.map((x) => (x.id === id ? { ...x, seenByStaff: true } : x)));
+    markSeenByStaff(id).catch(() => {});
+  };
+
+  const openRequest = (r) => {
+    setSelectedId(r.id);
     setRejecting(false);
     setReason('');
-    if (!r.seenByStaff) {
-      await markSeenByStaff(r.id).catch(() => {});
-      load();
-    }
+    if (!r.seenByStaff) markSeen(r.id);
   };
 
   const changeStatus = async (to, rejectReason) => {
@@ -65,7 +73,7 @@ export default function RequestsTab({ showToast }) {
     try {
       const updated = await updateStatus(selected.id, to, rejectReason);
       showToast(`${updated.referenceNumber} is now ${updated.status}.`);
-      setSelected(null);
+      closeModal();
       load();
     } catch (err) {
       showToast(err.message, 'error');
@@ -119,7 +127,23 @@ export default function RequestsTab({ showToast }) {
       </div>
 
       {selected && (
-        <Modal title={selected.documentType} subtitle={selected.referenceNumber} onClose={() => setSelected(null)}>
+        <Modal title={selected.documentType} subtitle={selected.referenceNumber} onClose={closeModal}>
+          {/* The resident changed the request while this window was open */}
+          {!selected.seenByStaff && selected.status === 'Pending' && (
+            <div className="mb-5 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-xs text-amber-900 flex items-start gap-3">
+              <div className="flex-1">
+                <p className="font-semibold">The resident just updated this request</p>
+                <p className="mt-0.5">The document type, purpose or ID may have changed. Check the details below before processing.</p>
+              </div>
+              <button onClick={() => markSeen(selected.id)} className="shrink-0 font-semibold underline">Got it</button>
+            </div>
+          )}
+          {selected.status === 'Cancelled' && (
+            <div className="mb-5 bg-rose-50 border border-rose-200 rounded-2xl px-4 py-3 text-xs text-rose-800">
+              <p className="font-semibold">The resident cancelled this request</p>
+              <p className="mt-0.5">It can no longer be processed.</p>
+            </div>
+          )}
           <div className="grid md:grid-cols-2 gap-6">
             <dl className="space-y-3 text-sm">
               <div><dt className={labelCls}>Resident</dt><dd className="text-slate-900">{selected.residentName}</dd></div>
@@ -140,7 +164,7 @@ export default function RequestsTab({ showToast }) {
             </div>
           </div>
 
-          {rejecting ? (
+          {rejecting && CAN_REJECT.includes(selected.status) ? (
             <div className="mt-6 space-y-3">
               <label className={labelCls}>Reason for rejecting (the resident will see this)</label>
               <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} maxLength={500}

@@ -67,10 +67,14 @@ public class DocumentRequest {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    /** When the status last changed. Shown on notifications (updatedAt also changes when a request is only read or archived). */
+    private LocalDateTime statusChangedAt;
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = createdAt;
+        if (statusChangedAt == null) statusChangedAt = createdAt;
     }
 
     @PreUpdate
@@ -90,7 +94,10 @@ public class DocumentRequest {
     public String getValidIdImage() { return validIdImage; }
     public void setValidIdImage(String validIdImage) { this.validIdImage = validIdImage; }
     public RequestStatus getStatus() { return status; }
-    public void setStatus(RequestStatus status) { this.status = status; }
+    public void setStatus(RequestStatus status) {
+        if (status != this.status) statusChangedAt = LocalDateTime.now();
+        this.status = status;
+    }
     public String getRejectionReason() { return rejectionReason; }
     public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
     public RequestStatus getResidentSeenStatus() { return residentSeenStatus; }
@@ -105,4 +112,5 @@ public class DocumentRequest {
     public void setDeletedByResident(boolean deletedByResident) { this.deletedByResident = deletedByResident; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public LocalDateTime getStatusChangedAt() { return statusChangedAt; }
 }

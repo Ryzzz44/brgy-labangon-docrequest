@@ -1,6 +1,7 @@
 // src/api/staffNotifications.js - Rafanan's API calls (StaffNotificationController in the backend).
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './client';
+import { onLive } from './live';
 
 // GET /api/staff/notifications -> what residents did lately (submitted, updated, cancelled), newest first
 export const getStaffNotifications = () => api.get('/api/staff/notifications');
@@ -21,7 +22,8 @@ export const markStaffNotificationsSeen = () => {
 };
 export const isNewNotification = (n, lastSeen) => new Date(n.timestamp).getTime() > lastSeen;
 
-// Hook: loads the notifications and reloads them every 15 seconds.
+// Hook: loads the notifications and reloads them right away when a resident submits, edits or cancels
+// (live update from the server). A slow 30-second check is kept as a backup.
 export function useStaffNotifications() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,8 +40,12 @@ export function useStaffNotifications() {
 
   useEffect(() => {
     reload();
-    const timer = setInterval(reload, 15000);
-    return () => clearInterval(timer);
+    const timer = setInterval(reload, 30000);
+    const stopLive = onLive('requests', reload);
+    return () => {
+      clearInterval(timer);
+      stopLive();
+    };
   }, [reload]);
 
   return { items, loading, reload };

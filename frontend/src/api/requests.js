@@ -2,24 +2,33 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from './client';
 
+// After a change (submit, read, delete), every part of the page that shows my requests
+// (the page itself, the sidebar badge, the pop-ups) reloads at once instead of waiting 15 seconds.
+const CHANGED = 'requests:changed';
+const andRefresh = (promise) =>
+  promise.then((result) => {
+    window.dispatchEvent(new Event(CHANGED));
+    return result;
+  });
+
 // POST /api/resident/requests -> the new request (with its reference number)
 export const submitRequest = (documentType, purpose, validIdImage) =>
-  api.post('/api/resident/requests', { documentType, purpose, validIdImage });
+  andRefresh(api.post('/api/resident/requests', { documentType, purpose, validIdImage }));
 
 // GET /api/resident/requests -> my requests, newest first
 export const getMyRequests = () => api.get('/api/resident/requests');
 
 // PATCH /api/resident/requests/{id}/seen -> mark one notification as read
-export const markSeen = (id) => api.patch(`/api/resident/requests/${id}/seen`);
+export const markSeen = (id) => andRefresh(api.patch(`/api/resident/requests/${id}/seen`));
 
 // PATCH /api/resident/requests/seen-all -> mark every notification as read
-export const markAllSeen = () => api.patch('/api/resident/requests/seen-all');
+export const markAllSeen = () => andRefresh(api.patch('/api/resident/requests/seen-all'));
 
 // PATCH /api/resident/requests/{id}/clear-notification -> X button: delete one notification
-export const clearNotification = (id) => api.patch(`/api/resident/requests/${id}/clear-notification`);
+export const clearNotification = (id) => andRefresh(api.patch(`/api/resident/requests/${id}/clear-notification`));
 
 // PATCH /api/resident/requests/clear-notifications -> "Delete all" notifications
-export const clearAllNotifications = () => api.patch('/api/resident/requests/clear-notifications');
+export const clearAllNotifications = () => andRefresh(api.patch('/api/resident/requests/clear-notifications'));
 
 // A status update the resident has not read yet (also used for the red badge and pop-ups).
 export const isUnreadUpdate = (r) => r.status !== 'Pending' && r.status !== r.residentSeenStatus;
@@ -45,7 +54,11 @@ export function useMyRequests() {
   useEffect(() => {
     reload();
     const timer = setInterval(reload, 15000);
-    return () => clearInterval(timer); // stop when the page closes
+    window.addEventListener(CHANGED, reload); // reload right after a change
+    return () => {
+      clearInterval(timer); // stop when the page closes
+      window.removeEventListener(CHANGED, reload);
+    };
   }, [reload]);
 
   return { requests, loading, error, reload };

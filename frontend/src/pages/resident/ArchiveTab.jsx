@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, StatusBadge, IconArchive, IconTrash, formatDate, btnPrimary, btnSecondary, btnDanger, cardCls } from '../../components/ui';
 import { getManagedRequests, archiveRequest, unarchiveRequest, deleteRequest, deleteAllArchived } from '../../api/requestManagement';
+import { onLive } from '../../api/live';
 
 function RequestRow({ r, children }) {
   return (
@@ -33,8 +34,12 @@ export default function ArchiveTab({ showToast }) {
       showToast(err.message, 'error');
     }
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, []);
+  // Load now, and again whenever the server says requests changed (for example staff processed one).
+  useEffect(() => {
+    load();
+    return onLive('requests', load);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Runs an action, shows a message, and reloads both lists.
   const act = async (fn, okMessage) => {

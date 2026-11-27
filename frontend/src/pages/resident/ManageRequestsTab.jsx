@@ -7,6 +7,7 @@ import { Modal, StatusBadge, formatDate, inputCls, labelCls, btnPrimary, btnSeco
 import { DOCUMENT_TYPES } from '../../utils/constants';
 import { compressImage } from '../../utils/image';
 import { getManagedRequests, editRequest, cancelRequest } from '../../api/requestManagement';
+import { onLive } from '../../api/live';
 
 export default function ManageRequestsTab({ showToast }) {
   const [requests, setRequests] = useState([]);
@@ -25,8 +26,12 @@ export default function ManageRequestsTab({ showToast }) {
       setLoading(false);
     }
   };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { load(); }, []);
+  // Load now, and again whenever the server says requests changed (for example staff processed one).
+  useEffect(() => {
+    load();
+    return onLive('requests', load);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openEdit = (r) => {
     setEditing(r);
